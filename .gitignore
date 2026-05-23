@@ -34,3 +34,6 @@ obj/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# CMake build folder
+build/
