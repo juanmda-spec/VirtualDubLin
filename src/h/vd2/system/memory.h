@@ -1,3 +1,4 @@
+#include <stddef.h>
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -40,7 +41,11 @@ struct VDAlignedObject {
 void *VDAlignedVirtualAlloc(size_t n);
 void VDAlignedVirtualFree(void *p);
 
+#ifndef _LINUX_PORT
 extern void (__cdecl *VDSwapMemory)(void *p0, void *p1, size_t bytes);
+#else
+extern void (*VDSwapMemory)(void *p0, void *p1, size_t bytes);
+#endif
 
 void VDInvertMemory(void *p, unsigned bytes);
 

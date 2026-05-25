@@ -19,9 +19,15 @@
 #include <vd2/system/vdtypes.h>
 #include <vd2/system/atomic.h>
 #include <vd2/system/thread.h>
-#include <vd2/system/error.h>
+#include <vd2/system/Error.h>
+#ifndef _LINUX_PORT
 #include <windows.h>
+#else
+#include <vd2/system/linux/win32_compat.h>
+#endif
+#ifndef _LINUX_PORT
 #include <process.h>
+#endif
 #include <vd2/system/win32/intrin.h>
 #include <string.h>
 #include <stdarg.h>

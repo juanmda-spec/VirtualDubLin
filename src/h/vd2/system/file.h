@@ -36,7 +36,7 @@
 #include <vd2/system/vdalloc.h>
 #include <vd2/system/vdstl.h>
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_LINUX_PORT)
 	typedef void *VDFileHandle;				// this needs to match wtypes.h definition for HANDLE
 #else
 	#error No operating system target declared??

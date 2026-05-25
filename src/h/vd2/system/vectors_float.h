@@ -39,7 +39,7 @@ public:
 	};
 };
 
-VDFORCEINLINE vdfloat2 operator*(const float s, const vdfloat2& v) { return v*s; }
+inline vdfloat2 operator*(const float s, const vdfloat2& v) { return v*s; }
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -88,7 +88,7 @@ public:
 	};
 };
 
-VDFORCEINLINE vdfloat3 operator*(const float s, const vdfloat3& v) { return v*s; }
+inline vdfloat3 operator*(const float s, const vdfloat3& v) { return v*s; }
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -138,69 +138,75 @@ public:
 	};
 };
 
-VDFORCEINLINE vdfloat4 operator*(const float s, const vdfloat4& v) { return v*s; }
+inline vdfloat4 operator*(const float s, const vdfloat4& v) { return v*s; }
 
 ///////////////////////////////////////////////////////////////////////////
 
 class vdfloat2c : public vdfloat2 {
 public:
-	VDFORCEINLINE vdfloat2c(float x2, float y2) {x=x2; y=y2;}
-	VDFORCEINLINE vdfloat2c(const float src[2]) {x=src[0]; y=src[1];}
+	vdfloat2c() {}
+public:
+	inline vdfloat2c(float x2, float y2) {x=x2; y=y2;}
+	inline vdfloat2c(const float src[2]) {x=src[0]; y=src[1];}
 };
 
 class vdfloat3c : public vdfloat3 {
 public:
-	VDFORCEINLINE vdfloat3c(float x2, float y2, float z2) { x=x2; y=y2; z=z2; }
-	VDFORCEINLINE vdfloat3c(const float src[3]) { x=src[0]; y=src[1]; z=src[2]; }
+	vdfloat3c() {}
+public:
+	inline vdfloat3c(float x2, float y2, float z2) { x=x2; y=y2; z=z2; }
+	inline vdfloat3c(const float src[3]) { x=src[0]; y=src[1]; z=src[2]; }
 };
 
 class vdfloat4c : public vdfloat4 {
 public:
-	VDFORCEINLINE vdfloat4c(float x2, float y2, float z2, float w2) { x=x2; y=y2; z=z2; w=w2; }
-	VDFORCEINLINE vdfloat4c(const float src[4]) { x=src[0]; y=src[1]; z=src[2]; w=src[3]; }
+	vdfloat4c() {}
+public:
+	inline vdfloat4c(float x2, float y2, float z2, float w2) { x=x2; y=y2; z=z2; w=w2; }
+	inline vdfloat4c(const float src[4]) { x=src[0]; y=src[1]; z=src[2]; w=src[3]; }
 };
 
 
 ///////////////////////////////////////////////////////////////////////////
 
 namespace nsVDMath {
-	VDFORCEINLINE float length(const vdfloat2& a) {
+	inline float length(const vdfloat2& a) {
 		return sqrtf(a.x*a.x + a.y*a.y);
 	}
 
-	VDFORCEINLINE float length(const vdfloat3& a) {
+	inline float length(const vdfloat3& a) {
 		return sqrtf(a.x*a.x + a.y*a.y + a.z*a.z);
 	}
 
-	VDFORCEINLINE float length(const vdfloat4& a) {
+	inline float length(const vdfloat4& a) {
 		return sqrtf(a.x*a.x + a.y*a.y + a.z*a.z + a.w*a.w);
 	}
 
-	VDFORCEINLINE vdfloat2 normalize(const vdfloat2& a) {
+	inline vdfloat2 normalize(const vdfloat2& a) {
 		return a / length(a);
 	}
 
-	VDFORCEINLINE vdfloat3 normalize(const vdfloat3& a) {
+	inline vdfloat3 normalize(const vdfloat3& a) {
 		return a / length(a);
 	}
 
-	VDFORCEINLINE vdfloat4 normalize(const vdfloat4& a) {
+	inline vdfloat4 normalize(const vdfloat4& a) {
 		return a / length(a);
 	}
 
-	VDFORCEINLINE float dot(const vdfloat2& a, const vdfloat2& b) {
+	inline float dot(const vdfloat2& a, const vdfloat2& b) {
 		return a.x*b.x + a.y*b.y;
 	}
 
-	VDFORCEINLINE float dot(const vdfloat3& a, const vdfloat3& b) {
+	inline float dot(const vdfloat3& a, const vdfloat3& b) {
 		return a.x*b.x + a.y*b.y + a.z*b.z;
 	}
 
-	VDFORCEINLINE float dot(const vdfloat4& a, const vdfloat4& b) {
+	inline float dot(const vdfloat4& a, const vdfloat4& b) {
 		return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
 	}
 
-	VDFORCEINLINE vdfloat3 cross(const vdfloat3& a, const vdfloat3& b) {
+	inline vdfloat3 cross(const vdfloat3& a, const vdfloat3& b) {
 		const vdfloat3 r = {a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x};
 		return r;
 	}

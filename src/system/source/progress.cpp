@@ -29,7 +29,7 @@
 
 #include <vd2/system/tls.h>
 #include <vd2/system/progress.h>
-#include <vd2/system/error.h>
+#include <vd2/system/Error.h>
 #include <vd2/system/atomic.h>
 #include <vd2/system/thread.h>
 

@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 #include "stdafx.h"
 #include <windows.h>
 #include <map>
@@ -306,3 +307,19 @@ void VDDestroyFunctionThunk(VDFunctionThunk *pFnThunk) {
 #endif
 
 }
+
+#else
+#include "stdafx.h"
+#include <vd2/system/thunk.h>
+bool VDInitThunkAllocator() { return false; }
+void VDShutdownThunkAllocator() {}
+void *VDAllocateThunkMemory(size_t len) { return NULL; }
+void VDFreeThunkMemory(void *p, size_t len) {}
+void VDSetThunkMemory(void *p, const void *src, size_t len) {}
+void VDFlushThunkMemory(void *p, size_t len) {}
+VDFunctionThunk *VDCreateFunctionThunkFromMethod(void *method, void *pThis, size_t argbytes, bool stdcall_thunk) { return NULL; }
+void VDDestroyFunctionThunk(VDFunctionThunk *pFnThunk) {}
+
+
+
+#endif

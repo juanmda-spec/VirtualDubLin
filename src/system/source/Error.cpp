@@ -96,7 +96,9 @@ void MyError::vsetf(const char *f, va_list val) {
 	buf = NULL;
 }
 
+#ifndef _LINUX_PORT
 void MyError::post(HWND hWndParent, const char *title) const {
+
 	if (!buf || !*buf)
 		return;
 
@@ -105,6 +107,9 @@ void MyError::post(HWND hWndParent, const char *title) const {
 
 	MessageBox(hWndParent, buf, title, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 }
+#else
+void MyError::post(HWND hWndParent, const char *title) const {}
+#endif
 
 void MyError::discard() {
 	free(buf);

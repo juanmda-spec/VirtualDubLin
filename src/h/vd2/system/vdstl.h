@@ -157,7 +157,7 @@ public:
 	pointer allocate(size_type n, void *p_close = 0) {
 		if (n > ((~(size_type)0) >> 1) / sizeof(T))
 			throw_oom(n, sizeof(T));
-		
+
 		pointer p = (pointer)malloc(n*sizeof(T));
 
 		if (!p)
@@ -1175,7 +1175,7 @@ public:
 
 	vdfastvector& operator=(const vdfastvector& x) {
 		if (this != &x)
-			assign(x.mpBegin, x.mpEnd);
+			this->assign(x.mpBegin, x.mpEnd);
 
 		return *this;
 	}
@@ -1272,7 +1272,7 @@ public:
 
 	vdfastfixedvector& operator=(const vdfastfixedvector& x) {
 		if (this != &x)
-			assign(x.mpBegin, x.mpEnd);
+			this->assign(x.mpBegin, x.mpEnd);
 
 		return *this;
 	}

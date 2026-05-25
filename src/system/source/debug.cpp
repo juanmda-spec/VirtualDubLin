@@ -26,7 +26,9 @@
 #include "stdafx.h"
 #include <stdio.h>
 
+#ifndef _LINUX_PORT
 #include <windows.h>
+#endif
 #include <vd2/system/win32/intrin.h>
 
 #include <vd2/system/vdtypes.h>
@@ -138,8 +140,12 @@ void VDDebugPrint(const char *format, ...) {
 	va_start(val, format);
 	_vsnprintf(buf, sizeof buf, format, val);
 	va_end(val);
+#ifndef _LINUX_PORT
 	Sleep(0);
 	OutputDebugString(buf);
+#else
+	fprintf(stderr, "%s", buf);
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////

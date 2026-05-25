@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -631,7 +632,7 @@ void VDFileAsyncNT::FastWrite(const void *pData, uint32 bytes) {
 			bytesLeft -= actual;
 		}
 	}
-		
+
 	mClientFastPointer += bytes;
 }
 
@@ -923,3 +924,33 @@ IVDFileAsync *VDCreateFileAsync(IVDFileAsync::Mode mode) {
 			return new VDFileAsync9x(false, false);
 	}
 }
+
+#else
+#include "stdafx.h"
+#include <vd2/system/fileasync.h>
+#include <vd2/system/Error.h>
+#include <vd2/system/math.h>
+
+class VDFileAsyncLinux : public IVDFileAsync {
+public:
+	VDFileAsyncLinux() {}
+	~VDFileAsyncLinux() {}
+
+	void SetPreemptiveExtend(bool b) {}
+	bool IsPreemptiveExtendActive() { return false; }
+	bool IsOpen() { return false; }
+	void Open(const wchar_t *pszFilename, uint32 count, uint32 bufferSize) {}
+	void Open(VDFileHandle h, uint32 count, uint32 bufferSize) {}
+	void Close() {}
+	void FastWrite(const void *pData, uint32 bytes) {}
+	void FastWriteEnd() {}
+	void Write(sint64 pos, const void *pData, uint32 bytes) {}
+	bool Extend(sint64 pos) { return false; }
+	void Truncate(sint64 pos) {}
+	void SafeTruncateAndClose(sint64 pos) {}
+	sint64 GetFastWritePos() { return 0; }
+	sint64 GetSize() { return 0; }
+};
+
+IVDFileAsync *VDFileAsyncCreate() { return new VDFileAsyncLinux(); }
+#endif

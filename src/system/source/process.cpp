@@ -1,4 +1,5 @@
 #include <stdafx.h>
+#ifndef _LINUX_PORT
 #include <vd2/system/process.h>
 #include <vd2/system/VDString.h>
 #include <vd2/system/w32assist.h>
@@ -45,3 +46,7 @@ void VDLaunchProgram(const wchar_t *path) {
 	if (!success)
 		throw MyWin32Error("Unable to launch process: %%s", GetLastError());
 }
+
+#else
+void VDLaunchProgram(const wchar_t *path) {}
+#endif

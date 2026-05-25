@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -26,7 +27,11 @@
 #ifndef f_VD2_SYSTEM_W32ASSIST_H
 #define f_VD2_SYSTEM_W32ASSIST_H
 
+#ifndef _LINUX_PORT
 #include <windows.h>
+#else
+#include <vd2/system/linux/win32_compat.h>
+#endif
 
 #include <vd2/system/VDString.h>
 
@@ -63,7 +68,9 @@ bool		VDIsForegroundTaskW32();
 LPVOID		VDConvertThreadToFiberW32(LPVOID parm);
 void		VDSwitchToFiberW32(LPVOID fiber);
 
+#ifndef _LINUX_PORT
 int			VDGetSizeOfBitmapHeaderW32(const BITMAPINFOHEADER *pHdr);
+#endif
 void		VDSetWindowTextW32(HWND hwnd, const wchar_t *s);
 void		VDSetWindowTextFW32(HWND hwnd, const wchar_t *format, ...);
 VDStringA	VDGetWindowTextAW32(HWND hwnd);
@@ -79,10 +86,16 @@ void		VDEnableMenuItemByCommandW32(HMENU hmenu, UINT cmd, bool checked);
 VDStringW	VDGetMenuItemTextByCommandW32(HMENU hmenu, UINT cmd);
 void		VDSetMenuItemTextByCommandW32(HMENU hmenu, UINT cmd, const wchar_t *text);
 
+#ifndef _LINUX_PORT
 LRESULT		VDDualCallWindowProcW32(WNDPROC wp, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+#ifndef _LINUX_PORT
 LRESULT		VDDualDefWindowProcW32(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
 
+#ifndef _LINUX_PORT
 EXECUTION_STATE VDSetThreadExecutionStateW32(EXECUTION_STATE esFlags);
+#endif
 
 bool		VDSetFilePointerW32(HANDLE h, sint64 pos, DWORD dwMoveMethod);
 bool		VDGetFileSizeW32(HANDLE h, sint64& size);
@@ -104,4 +117,14 @@ bool		VDPatchModuleExportTableW32(HMODULE hmod, const char *name, void *pCompare
 /// Load a library from the Windows system directory.
 HMODULE		VDLoadSystemLibraryW32(const char *name);
 
+#endif
+
+#else
+#ifndef f_VD2_SYSTEM_W32ASSIST_H
+#define f_VD2_SYSTEM_W32ASSIST_H
+
+inline bool VDIsWindowsNT() { return false; }
+inline bool VDIsAtLeastVistaW32() { return false; }
+
+#endif
 #endif

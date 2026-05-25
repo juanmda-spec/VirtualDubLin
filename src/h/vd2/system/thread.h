@@ -1,3 +1,4 @@
+#include <limits.h>
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -40,18 +41,43 @@ typedef uint32 VDProcessId;
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
 	struct _CRITICAL_SECTION;
+	#ifndef _LINUX_PORT
 	typedef _CRITICAL_SECTION VDCriticalSectionW32;
 #else
+	#include <pthread.h>
+typedef pthread_mutex_t VDCriticalSectionW32;
+#endif
+#else
 	struct _RTL_CRITICAL_SECTION;
+	#ifndef _LINUX_PORT
 	typedef _RTL_CRITICAL_SECTION VDCriticalSectionW32;
+#else
+	#include <pthread.h>
+typedef pthread_mutex_t VDCriticalSectionW32;
+#endif
 #endif
 
+#ifndef _LINUX_PORT
 extern "C" void __declspec(dllimport) __stdcall InitializeCriticalSection(VDCriticalSectionW32 *lpCriticalSection);
 extern "C" void __declspec(dllimport) __stdcall LeaveCriticalSection(VDCriticalSectionW32 *lpCriticalSection);
 extern "C" void __declspec(dllimport) __stdcall EnterCriticalSection(VDCriticalSectionW32 *lpCriticalSection);
 extern "C" void __declspec(dllimport) __stdcall DeleteCriticalSection(VDCriticalSectionW32 *lpCriticalSection);
 extern "C" unsigned long __declspec(dllimport) __stdcall WaitForSingleObject(void *hHandle, unsigned long dwMilliseconds);
 extern "C" int __declspec(dllimport) __stdcall ReleaseSemaphore(void *hSemaphore, long lReleaseCount, long *lpPreviousCount);
+#else
+inline void InitializeCriticalSection(void *lpCriticalSection) {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init((pthread_mutex_t*)lpCriticalSection, &attr);
+    pthread_mutexattr_destroy(&attr);
+}
+inline void LeaveCriticalSection(void *lpCriticalSection) { pthread_mutex_unlock((pthread_mutex_t*)lpCriticalSection); }
+inline void EnterCriticalSection(void *lpCriticalSection) { pthread_mutex_lock((pthread_mutex_t*)lpCriticalSection); }
+inline void DeleteCriticalSection(void *lpCriticalSection) { pthread_mutex_destroy((pthread_mutex_t*)lpCriticalSection); }
+inline unsigned long WaitForSingleObject(void *hHandle, unsigned long dwMilliseconds) { return 0; }
+inline int ReleaseSemaphore(void *hSemaphore, long lReleaseCount, long *lpPreviousCount) { return 1; }
+#endif
 
 VDThreadID VDGetCurrentThreadID();
 VDProcessId VDGetCurrentProcessId();
@@ -120,7 +146,7 @@ public:
 	void ThreadFinish();						// exit thread
 
 private:
-	static unsigned __stdcall StaticThreadStart(void *pThis);
+	static unsigned StaticThreadStart(void *pThis);
 
 	const char *mpszDebugName;
 	VDThreadHandle	mhThread;
@@ -132,13 +158,18 @@ private:
 
 class VDCriticalSection {
 private:
-	struct CritSec {				// This is a clone of CRITICAL_SECTION.
+	struct CritSec {
+#ifdef _LINUX_PORT
+		pthread_mutex_t mutex;
+#else
+				// This is a clone of CRITICAL_SECTION.
 		void	*DebugInfo;
 		sint32	LockCount;
 		sint32	RecursionCount;
 		void	*OwningThread;
 		void	*LockSemaphore;
 		uint32	SpinCount;
+	#endif
 	} csect;
 
 	VDCriticalSection(const VDCriticalSection&);
@@ -156,27 +187,27 @@ public:
 	};
 
 	VDCriticalSection() {
-		InitializeCriticalSection((VDCriticalSectionW32 *)&csect);
+		InitializeCriticalSection((void *)&csect);
 	}
 
 	~VDCriticalSection() {
-		DeleteCriticalSection((VDCriticalSectionW32 *)&csect);
+		DeleteCriticalSection((void *)&csect);
 	}
 
 	void operator++() {
-		EnterCriticalSection((VDCriticalSectionW32 *)&csect);
+		EnterCriticalSection((void *)&csect);
 	}
 
 	void operator--() {
-		LeaveCriticalSection((VDCriticalSectionW32 *)&csect);
+		LeaveCriticalSection((void *)&csect);
 	}
 
 	void Lock() {
-		EnterCriticalSection((VDCriticalSectionW32 *)&csect);
+		EnterCriticalSection((void *)&csect);
 	}
 
 	void Unlock() {
-		LeaveCriticalSection((VDCriticalSectionW32 *)&csect);
+		LeaveCriticalSection((void *)&csect);
 	}
 };
 
@@ -206,7 +237,7 @@ public:
 //    breaks the preprocessor (KB article Q199057).  Shame, too, because without it
 //    all the autolocks look the same.
 
-#define vdsynchronized2(lock) if(VDCriticalSection::AutoLock vd__lock=(lock))VDNEVERHERE;else
+#define vdsynchronized2(lock) if(bool vd__lock_b=false){}else if(VDCriticalSection::AutoLock vd__lock=(lock)){}else
 #define vdsynchronized1(lock) vdsynchronized2(lock)
 #define vdsynchronized(lock) vdsynchronized1(lock)
 

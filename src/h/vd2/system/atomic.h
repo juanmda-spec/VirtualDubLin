@@ -200,7 +200,7 @@ public:
 
 	void operator^=(int v) {
 		__sync_fetch_and_xor(&n, v);
-	}	
+	}
 
 #else
 	/// Atomic bitwise AND.
@@ -307,7 +307,7 @@ public:
 	/// Atomic exchange.
 	bool xchg(bool v) {
 		const uint32 mask = ((uint32)0xFF << (int)((size_t)&n & 3));
-		const int andval = (int)~mask; 
+		const int andval = (int)~mask;
 		const int orval = (int)(mask & 0x01010101);
 		volatile int *p = (volatile int *)((uintptr)&n & ~(uintptr)3);
 

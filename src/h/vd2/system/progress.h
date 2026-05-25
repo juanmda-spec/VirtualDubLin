@@ -26,7 +26,7 @@
 #ifndef f_SYSTEM_PROGRESS_H
 #define f_SYSTEM_PROGRESS_H
 
-#include <vd2/system/error.h>
+#include <vd2/system/Error.h>
 
 class VDAtomicInt;
 class VDSignalPersistent;

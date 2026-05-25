@@ -137,7 +137,11 @@ void VDRTProfiler::FreeChannel(int ch) {
 void VDRTProfiler::BeginEvent(int channel, uint32 color, const char *name) {
 	if (mbEnableCollection) {
 		LARGE_INTEGER tim;
-		QueryPerformanceCounter(&tim);
+		#ifndef _LINUX_PORT
+			QueryPerformanceCounter(&tim);
+			#else
+			tim.QuadPart = 0;
+			#endif
 		vdsynchronized(mLock) {
 			Channel& chan = mChannelArray[channel];
 

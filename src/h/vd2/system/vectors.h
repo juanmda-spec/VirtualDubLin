@@ -97,7 +97,7 @@ public:
 
 	self_type adjunct() const {
 		self_type res;
-		
+
 		res.m[0].set(m[1].v[1], -m[0].v[1]);
 		res.m[1].set(-m[1].v[0], -m[0].v[0]);
 
@@ -229,9 +229,9 @@ public:
 
 		self_type res;
 
-		res.m[0] = cross(m[1], m[2]);
-		res.m[1] = cross(m[2], m[0]);
-		res.m[2] = cross(m[0], m[1]);
+		res.m[0] = nsVDMath::cross(m[1], m[2]);
+		res.m[1] = nsVDMath::cross(m[2], m[0]);
+		res.m[2] = nsVDMath::cross(m[0], m[1]);
 
 		return res.transpose();
 	}
@@ -273,7 +273,7 @@ public:
 };
 
 inline vdfloat3 operator*(const vdfloat3& v, const vdfloat3x3& m) {
-	return v.x * m.m[0] + v.y * m.m[1] + v.z * m.m[2];
+	return m.m[0] * v.x + m.m[1] * v.y + m.m[2] * v.z;
 }
 
 class vdfloat4x4 {
