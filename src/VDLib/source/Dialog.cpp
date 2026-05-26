@@ -1,8 +1,5 @@
-#ifndef _LINUX_PORT
 #include "stdafx.h"
-#ifndef _LINUX_PORT
 #include <windows.h>
-#endif
 #include <commctrl.h>
 #include <shellapi.h>
 #include <vd2/system/w32assist.h>
@@ -999,5 +996,3 @@ void VDDialogResizerW32::Erase(const VDZHDC *phdc) {
 			ReleaseDC(mhwndBase, hdc);
 	}
 }
-
-#endif // _LINUX_PORT

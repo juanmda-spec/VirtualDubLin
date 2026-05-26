@@ -1,8 +1,5 @@
-#ifndef _LINUX_PORT
 #include "stdafx.h"
-#ifndef _LINUX_PORT
 #include <windows.h>
-#endif
 #include <commctrl.h>
 
 #include <vd2/system/w32assist.h>
@@ -1200,5 +1197,3 @@ VDZLRESULT VDUIProxyTreeViewControl::On_WM_NOTIFY(VDZWPARAM wParam, VDZLPARAM lP
 
 	return 0;
 }
-
-#endif // _LINUX_PORT

@@ -1,4 +1,3 @@
-#include <vd2/system/memory.h>
 //	VirtualDub - Video processing and capture application
 //	Application helper library
 //	Copyright (C) 1998-2006 Avery Lee
@@ -20,7 +19,7 @@
 #include "stdafx.h"
 #include <vd2/system/math.h>
 #include <vd2/system/cpuaccel.h>
-#include <vd2/system/Error.h>
+#include <vd2/system/error.h>
 #include <vd2/VDLib/fft.h>
 
 #include "fft_radix2.inl"

@@ -1,4 +1,3 @@
-#include <stddef.h>
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.

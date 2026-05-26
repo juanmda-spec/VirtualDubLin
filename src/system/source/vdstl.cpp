@@ -24,7 +24,7 @@
 //		distribution.
 
 #include "stdafx.h"
-#include <vd2/system/Error.h>
+#include <vd2/system/error.h>
 #include <vd2/system/vdstl.h>
 
 void VDNORETURN vdallocator_base::throw_oom(size_t n, size_t elsize) {

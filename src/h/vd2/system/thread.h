@@ -44,16 +44,14 @@ typedef uint32 VDProcessId;
 	#ifndef _LINUX_PORT
 	typedef _CRITICAL_SECTION VDCriticalSectionW32;
 #else
-	#include <pthread.h>
-typedef pthread_mutex_t VDCriticalSectionW32;
+	typedef struct { void* p; } VDCriticalSectionW32;
 #endif
 #else
 	struct _RTL_CRITICAL_SECTION;
 	#ifndef _LINUX_PORT
 	typedef _RTL_CRITICAL_SECTION VDCriticalSectionW32;
 #else
-	#include <pthread.h>
-typedef pthread_mutex_t VDCriticalSectionW32;
+	typedef struct { void* p; } VDCriticalSectionW32;
 #endif
 #endif
 
@@ -65,16 +63,10 @@ extern "C" void __declspec(dllimport) __stdcall DeleteCriticalSection(VDCritical
 extern "C" unsigned long __declspec(dllimport) __stdcall WaitForSingleObject(void *hHandle, unsigned long dwMilliseconds);
 extern "C" int __declspec(dllimport) __stdcall ReleaseSemaphore(void *hSemaphore, long lReleaseCount, long *lpPreviousCount);
 #else
-inline void InitializeCriticalSection(void *lpCriticalSection) {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init((pthread_mutex_t*)lpCriticalSection, &attr);
-    pthread_mutexattr_destroy(&attr);
-}
-inline void LeaveCriticalSection(void *lpCriticalSection) { pthread_mutex_unlock((pthread_mutex_t*)lpCriticalSection); }
-inline void EnterCriticalSection(void *lpCriticalSection) { pthread_mutex_lock((pthread_mutex_t*)lpCriticalSection); }
-inline void DeleteCriticalSection(void *lpCriticalSection) { pthread_mutex_destroy((pthread_mutex_t*)lpCriticalSection); }
+inline void InitializeCriticalSection(void *lpCriticalSection) {}
+inline void LeaveCriticalSection(void *lpCriticalSection) {}
+inline void EnterCriticalSection(void *lpCriticalSection) {}
+inline void DeleteCriticalSection(void *lpCriticalSection) {}
 inline unsigned long WaitForSingleObject(void *hHandle, unsigned long dwMilliseconds) { return 0; }
 inline int ReleaseSemaphore(void *hSemaphore, long lReleaseCount, long *lpPreviousCount) { return 1; }
 #endif
@@ -158,18 +150,13 @@ private:
 
 class VDCriticalSection {
 private:
-	struct CritSec {
-#ifdef _LINUX_PORT
-		pthread_mutex_t mutex;
-#else
-				// This is a clone of CRITICAL_SECTION.
+	struct CritSec {				// This is a clone of CRITICAL_SECTION.
 		void	*DebugInfo;
 		sint32	LockCount;
 		sint32	RecursionCount;
 		void	*OwningThread;
 		void	*LockSemaphore;
 		uint32	SpinCount;
-	#endif
 	} csect;
 
 	VDCriticalSection(const VDCriticalSection&);
