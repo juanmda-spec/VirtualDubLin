@@ -10,6 +10,8 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QSlider>
+#include <QTimer>
+#include "FFmpegDecoder.h"
 
 class MainWindow : public QMainWindow
 {
@@ -21,6 +23,9 @@ public:
 
 private slots:
     void openVideo();
+    void updateFrame();
+    void playVideo();
+    void stopVideo();
 
 private:
     QLabel *inputVideoLabel;
@@ -28,6 +33,10 @@ private:
     QSlider *timelineSlider;
     QPushButton *playButton;
     QPushButton *stopButton;
+
+    FFmpegDecoder decoder;
+    QTimer *playbackTimer;
+    bool isPlaying = false;
 };
 
 #endif // MAINWINDOW_H
