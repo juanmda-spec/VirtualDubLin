@@ -12,6 +12,7 @@
 #include <QSlider>
 #include <QTimer>
 #include "FFmpegDecoder.h"
+#include "CudaFilter.h"
 
 class MainWindow : public QMainWindow
 {
@@ -35,6 +36,7 @@ private:
     QPushButton *stopButton;
 
     FFmpegDecoder decoder;
+    CudaFilter cudaFilter;
     QTimer *playbackTimer;
     bool isPlaying = false;
 };

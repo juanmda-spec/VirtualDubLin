@@ -77,6 +77,9 @@ void MainWindow::openVideo()
             qDebug() << "Archivo abierto con éxito:" << fileName;
             qDebug() << "Resolución:" << decoder.getVideoWidth() << "x" << decoder.getVideoHeight();
 
+            // Iniciar filtro CUDA
+            cudaFilter.init(decoder.getVideoWidth(), decoder.getVideoHeight());
+
             // Mostrar primer frame
             updateFrame();
         } else {
@@ -101,9 +104,18 @@ void MainWindow::updateFrame()
 {
     QImage img;
     if (decoder.decodeNextFrame(img)) {
-        // Redimensionar para encajar en el label manteniendo el aspecto
-        QPixmap pixmap = QPixmap::fromImage(img).scaled(inputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        inputVideoLabel->setPixmap(pixmap);
+        // Mostrar Original
+        QPixmap pixmapIn = QPixmap::fromImage(img).scaled(inputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        inputVideoLabel->setPixmap(pixmapIn);
+
+        // Procesar con CUDA
+        QImage outImg = img.copy(); // Crear imagen de destino
+        cudaFilter.processFrame(img.constBits(), outImg.bits());
+
+        // Mostrar Filtrado
+        QPixmap pixmapOut = QPixmap::fromImage(outImg).scaled(outputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        outputVideoLabel->setPixmap(pixmapOut);
+
     } else {
         // Fin del video o error
         stopVideo();

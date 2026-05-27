@@ -179,8 +179,7 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 	#include <stdint.h>
 	typedef uintptr_t uintptr;
 	typedef intptr_t intptr;
-#elif defined(VD_COMPILER_MSVC)
- && (VD_COMPILER_MSVC < 1300 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
+#elif defined(VD_COMPILER_MSVC) && (VD_COMPILER_MSVC < 1300 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
 #define new_nothrow new
 #else
 #define new_nothrow new(std::nothrow)
@@ -223,8 +222,7 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 	#include <stdint.h>
 	typedef uintptr_t uintptr;
 	typedef intptr_t intptr;
-#elif defined(VD_COMPILER_MSVC)
- && (VD_COMPILER_MSVC < 1400 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
+#elif defined(VD_COMPILER_MSVC) && (VD_COMPILER_MSVC < 1400 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
 	inline int vswprintf(wchar_t *dst, size_t bufsize, const wchar_t *format, va_list val) {
 		return _vsnwprintf(dst, bufsize, format, val);
 	}
@@ -482,8 +480,7 @@ extern void VDDebugPrint(const char *format, ...);
 	#include <stdint.h>
 	typedef uintptr_t uintptr;
 	typedef intptr_t intptr;
-#elif defined(VD_COMPILER_MSVC)
- && (VD_COMPILER_MSVC < 1400 || defined(VD_COMPILER_MSVC_VC8_DDK))
+#elif defined(VD_COMPILER_MSVC) && (VD_COMPILER_MSVC < 1400 || defined(VD_COMPILER_MSVC_VC8_DDK))
 #define vdobjectscope(object_def) if(object_def) VDNEVERHERE; else
 #else
 #define vdobjectscope(object_def) switch(object_def) case 0: default:
