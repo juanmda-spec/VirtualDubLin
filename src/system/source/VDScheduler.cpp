@@ -27,8 +27,10 @@
 #include <vd2/system/vdtypes.h>
 #include <vd2/system/VDScheduler.h>
 #include <vd2/system/thread.h>
-#include <vd2/system/error.h>
+#include <vd2/system/Error.h>
+#ifndef _LINUX_PORT
 #include <windows.h>
+#endif
 
 VDScheduler::VDScheduler()
 	: mpErrorCB(NULL)

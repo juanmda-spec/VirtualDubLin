@@ -80,7 +80,7 @@
 ///	  but since the result of AddRef() is always non-zero, the return of
 ///	  AddRef() is of no use unless it is the actual count.)
 ///
-class VDINTERFACE IVDRefCount {
+class IVDRefCount {
 public:
 	virtual int AddRef()=0;
 	virtual int Release()=0;
@@ -93,7 +93,7 @@ public:
 	vdrefcount(const vdrefcount& src) : mRefCount(0) {}		// do not copy the refcount
 	virtual ~vdrefcount() {}
 
-	vdrefcount& operator=(const vdrefcount&) {}			// do not copy the refcount
+	vdrefcount& operator=(const vdrefcount&) { return *this; }			// do not copy the refcount
 
 	int AddRef() {
 		return mRefCount.inc();
@@ -274,7 +274,7 @@ public:
 
 template<class T, class U>
 bool VDRefCountObjectFactory(U **pp) {
-	T *p = new_nothrow T;
+	T *p = new(std::nothrow) T;
 	if (!p)
 		return false;
 

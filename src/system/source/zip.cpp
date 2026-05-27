@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 #include <vd2/system/zip.h>
-#include <vd2/system/error.h>
+#include <vd2/system/Error.h>
 #include <vd2/system/binary.h>
 
 bool VDDeflateBitReader::refill() {

@@ -56,7 +56,7 @@ public:
 
 	static const size_type npos = (size_type)-1;
 
-	VDStringSpanA() 
+	VDStringSpanA()
 		: mpBegin(const_cast<value_type *>(sNull))
 		, mpEnd(const_cast<value_type *>(sNull))
 	{
@@ -180,7 +180,7 @@ public:
 	}
 
 	const VDStringSpanA subspan(size_type pos = 0, size_type n = npos) const {
-		
+
 		size_type len = (size_type)(mpEnd - mpBegin);
 		VDASSERT(pos <= len);
 
@@ -680,7 +680,7 @@ public:
 
 	static const size_type npos = (size_type)-1;
 
-	VDStringSpanW() 
+	VDStringSpanW()
 		: mpBegin(const_cast<value_type *>(sNull))
 		, mpEnd(const_cast<value_type *>(sNull))
 	{
@@ -762,8 +762,8 @@ public:
 		size_type lm = l1 < l2 ? l1 : l2;
 
 		for(size_type i = 0; i < lm; ++i) {
-			wint_t c = towlower(mpBegin[i]);
-			wint_t d = towlower(s.mpBegin[i]);
+			wint_t c = tolower(mpBegin[i]);
+			wint_t d = tolower(s.mpBegin[i]);
 
 			if (c != d)
 				return c < d ? -1 : +1;

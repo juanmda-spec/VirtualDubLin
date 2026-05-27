@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2011 Avery Lee, All Rights Reserved.
@@ -26,7 +27,9 @@
 #include "stdafx.h"
 #include <vd2/system/date.h>
 #include <vd2/system/w32assist.h>
+#ifndef _LINUX_PORT
 #include <windows.h>
+#endif
 
 VDDate VDGetCurrentDate() {
 	FILETIME ft;
@@ -50,8 +53,8 @@ VDExpandedDate VDGetLocalDate(const VDDate& date) {
 	if (::FileTimeToSystemTime(&ft, &st) &&
 		::SystemTimeToTzSpecificLocalTime(NULL, &st, &lt))
 	{
-		r.mYear = lt.wYear; 
-		r.mMonth = (uint8)lt.wMonth; 
+		r.mYear = lt.wYear;
+		r.mMonth = (uint8)lt.wMonth;
 		r.mDayOfWeek = (uint8)lt.wDayOfWeek;
 		r.mDay = (uint8)lt.wDay;
 		r.mHour = (uint8)lt.wHour;
@@ -64,8 +67,8 @@ VDExpandedDate VDGetLocalDate(const VDDate& date) {
 }
 
 void VDConvertExpandedDateToNativeW32(SYSTEMTIME& dst, const VDExpandedDate& src) {
-	dst.wYear = src.mYear; 
-	dst.wMonth = src.mMonth; 
+	dst.wYear = src.mYear;
+	dst.wMonth = src.mMonth;
 	dst.wDayOfWeek = src.mDayOfWeek;
 	dst.wDay = src.mDay;
 	dst.wHour = src.mHour;
@@ -129,3 +132,28 @@ void VDAppendLocalTimeString(VDStringW& dst, const VDExpandedDate& ed) {
 		}
 	}
 }
+
+#else
+
+#include <time.h>
+#include <sys/time.h>
+#include <vd2/system/date.h>
+#include <vd2/system/VDString.h>
+
+VDDate VDGetCurrentDate() {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+    VDDate d; d.mTicks = ((uint64_t)tv.tv_sec * 10000000 + (uint64_t)tv.tv_usec * 10 + 116444736000000000ULL); return d;
+}
+
+VDExpandedDate VDGetLocalDate(const VDDate& date) {
+    VDExpandedDate ed = {0};
+    return ed; // Stubbed
+}
+
+void VDAppendLocalDateString(VDStringW& dst, const VDExpandedDate& date) {}
+void VDAppendLocalTimeString(VDStringW& dst, const VDExpandedDate& date) {}
+void VDAppendLocalDateString(VDStringA& dst, const VDExpandedDate& date) {}
+void VDAppendLocalTimeString(VDStringA& dst, const VDExpandedDate& date) {}
+
+#endif

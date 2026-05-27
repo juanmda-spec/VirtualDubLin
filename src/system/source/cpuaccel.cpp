@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -24,8 +25,12 @@
 //		distribution.
 
 #include "stdafx.h"
+#ifndef _LINUX_PORT
 #include <wtypes.h>
+#endif
+#ifndef _LINUX_PORT
 #include <winnt.h>
+#endif
 #include <vd2/system/win32/intrin.h>
 #include <vd2/system/cpuaccel.h>
 
@@ -109,7 +114,7 @@ long CPUCheckForExtensions() {
 				sseSupported = false;
 		}
 #endif
-		
+
 		if (sseSupported) {
 			flags |= CPUF_SUPPORTS_SSE | CPUF_SUPPORTS_INTEGER_SSE;
 
@@ -183,3 +188,17 @@ void VDCPUCleanupExtensions() {
 	_mm_sfence();
 #endif
 }
+
+#else
+
+#include <vd2/system/cpuaccel.h>
+
+long VDGetCPUExtensions() {
+    return 0; // Stub for linux
+}
+
+void VDSetCPUExtensions(long mask) {}
+bool VDCPUIsX86() { return false; }
+bool VDCPUIsAMD64() { return false; }
+
+#endif

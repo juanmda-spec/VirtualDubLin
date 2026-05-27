@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -469,3 +470,18 @@ bool VDMemcpyGuarded(void *dst, const void *src, size_t bytes) {
 
 	return true;
 }
+
+#else
+#include "stdafx.h"
+#include <vd2/system/memory.h>
+#include <string.h>
+
+void (*VDSwapMemory)(void *p0, void *p1, size_t bytes);
+
+void VDZeroMemory(void *dst, size_t bytes) {
+	memset(dst, 0, bytes);
+}
+void VDFillMemory(void *dst, size_t bytes, uint8 val) {
+	memset(dst, val, bytes);
+}
+#endif

@@ -24,9 +24,16 @@
 //		distribution.
 
 #include "stdafx.h"
-#include <process.h>
-
+#ifndef _LINUX_PORT
 #include <windows.h>
+#include <process.h>
+#endif
+
+#ifdef _LINUX_PORT
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
 
 #include <vd2/system/vdtypes.h>
 #include <vd2/system/thread.h>
@@ -51,14 +58,23 @@ namespace {
 }
 
 VDThreadID VDGetCurrentThreadID() {
+#ifndef _LINUX_PORT
 	return (VDThreadID)GetCurrentThreadId();
+#else
+	return (VDThreadID)syscall(SYS_gettid);
+#endif
 }
 
 VDProcessId VDGetCurrentProcessId() {
+#ifndef _LINUX_PORT
 	return (VDProcessId)GetCurrentProcessId();
+#else
+	return (VDProcessId)getpid();
+#endif
 }
 
 uint32 VDGetLogicalProcessorCount() {
+#ifndef _LINUX_PORT
 	DWORD_PTR processAffinityMask;
 	DWORD_PTR systemAffinityMask;
 	if (!::GetProcessAffinityMask(::GetCurrentProcess(), &processAffinityMask, &systemAffinityMask))
@@ -71,6 +87,9 @@ uint32 VDGetLogicalProcessorCount() {
 	// We use the process affinity mask as that's the number of logical processors we'll
 	// actually be working with.
 	return VDCountBits(processAffinityMask);
+#else
+	return (uint32)sysconf(_SC_NPROCESSORS_ONLN);
+#endif
 }
 
 void VDSetThreadDebugName(VDThreadID tid, const char *name) {
@@ -89,8 +108,13 @@ void VDSetThreadDebugName(VDThreadID tid, const char *name) {
 }
 
 void VDThreadSleep(int milliseconds) {
-	if (milliseconds > 0)
+	if (milliseconds > 0) {
+#ifndef _LINUX_PORT
 		::Sleep(milliseconds);
+#else
+		usleep(milliseconds * 1000);
+#endif
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -112,10 +136,20 @@ bool VDThread::ThreadStart() {
 	VDASSERT(!isThreadAttached());
 
 	if (!isThreadAttached()) {
+	#ifndef _LINUX_PORT
 		mhThread = (void *)_beginthreadex(NULL, 0, StaticThreadStart, this, 0, &mThreadID);
 
 		if (mhThread && mThreadPriority != INT_MIN)
 			::SetThreadPriority(mhThread, mThreadPriority);
+	#else
+		pthread_t *pt = new pthread_t;
+		if (pthread_create(pt, NULL, (void* (*)(void*))StaticThreadStart, this) == 0) {
+			mhThread = (void *)pt;
+			mThreadID = (VDThreadID)*pt;
+		} else {
+			delete pt;
+		}
+	#endif
 	}
 
 	return mhThread != 0;
@@ -123,7 +157,12 @@ bool VDThread::ThreadStart() {
 
 void VDThread::ThreadDetach() {
 	if (isThreadAttached()) {
+#ifndef _LINUX_PORT
 		CloseHandle((HANDLE)mhThread);
+#else
+		pthread_detach(*(pthread_t*)mhThread);
+		delete (pthread_t*)mhThread;
+#endif
 		mhThread = NULL;
 		mThreadID = 0;
 	}
@@ -131,7 +170,11 @@ void VDThread::ThreadDetach() {
 
 void VDThread::ThreadWait() {
 	if (isThreadAttached()) {
+#ifndef _LINUX_PORT
 		WaitForSingleObject((HANDLE)mhThread, INFINITE);
+#else
+		pthread_join(*(pthread_t*)mhThread, NULL);
+#endif
 		ThreadDetach();
 		mThreadID = 0;
 	}
@@ -141,15 +184,19 @@ void VDThread::ThreadSetPriority(int priority) {
 	if (mThreadPriority != priority) {
 		mThreadPriority = priority;
 
+#ifndef _LINUX_PORT
 		if (mhThread && priority != INT_MIN)
 			::SetThreadPriority(mhThread, priority);
+#endif
 	}
 }
 
 bool VDThread::isThreadActive() {
 	if (isThreadAttached()) {
+#ifndef _LINUX_PORT
 		if (WAIT_TIMEOUT == WaitForSingleObject((HANDLE)mhThread, 0))
 			return true;
+#endif
 
 		ThreadDetach();
 		mThreadID = 0;
@@ -158,13 +205,16 @@ bool VDThread::isThreadActive() {
 }
 
 void VDThread::ThreadFinish() {
+#ifndef _LINUX_PORT
 	_endthreadex(0);
+#endif
 }
 
 void *VDThread::ThreadLocation() const {
 	if (!isThreadAttached())
 		return NULL;
 
+#ifndef _LINUX_PORT
 	CONTEXT ctx;
 
 	ctx.ContextFlags = CONTEXT_CONTROL;
@@ -180,6 +230,9 @@ void *VDThread::ThreadLocation() const {
 #elif defined(VD_CPU_ARM)
 	return (void *)ctx.Pc;
 #endif
+#else
+	return NULL;
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -190,7 +243,7 @@ unsigned __stdcall VDThread::StaticThreadStart(void *pThisAsVoid) {
 	// We cannot use mThreadID here because it might already have been
 	// invalidated by a detach in the main thread.
 	if (pThis->mpszDebugName)
-		VDSetThreadDebugName(GetCurrentThreadId(), pThis->mpszDebugName);
+		VDSetThreadDebugName(VDGetCurrentThreadID(), pThis->mpszDebugName);
 
 	VDInitThreadData(pThis->mpszDebugName);
 
@@ -209,36 +262,53 @@ unsigned __stdcall VDThread::StaticThreadStart(void *pThisAsVoid) {
 ///////////////////////////////////////////////////////////////////////////
 
 void VDCriticalSection::StructCheck() {
+#ifndef _LINUX_PORT
 	VDASSERTCT(sizeof(CritSec) == sizeof(CRITICAL_SECTION));
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
 VDSignal::VDSignal() {
+	#ifndef _LINUX_PORT
 	hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+#endif
 }
 
 VDSignalPersistent::VDSignalPersistent() {
+	#ifndef _LINUX_PORT
 	hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+#endif
 }
 
 VDSignalBase::~VDSignalBase() {
+	#ifndef _LINUX_PORT
 	CloseHandle(hEvent);
+#endif
 }
 
 void VDSignalBase::signal() {
+	#ifndef _LINUX_PORT
 	SetEvent(hEvent);
+#endif
 }
 
 void VDSignalBase::wait() {
+	#ifndef _LINUX_PORT
 	WaitForSingleObject(hEvent, INFINITE);
+#endif
 }
 
 bool VDSignalBase::check() {
+	#ifndef _LINUX_PORT
 	return WAIT_OBJECT_0 == WaitForSingleObject(hEvent, 0);
+#else
+	return false;
+#endif
 }
 
 int VDSignalBase::wait(VDSignalBase *second) {
+#ifndef _LINUX_PORT
 	HANDLE		hArray[16];
 	DWORD		dwRet;
 
@@ -248,9 +318,13 @@ int VDSignalBase::wait(VDSignalBase *second) {
 	dwRet = WaitForMultipleObjects(2, hArray, FALSE, INFINITE);
 
 	return dwRet == WAIT_FAILED ? -1 : dwRet - WAIT_OBJECT_0;
+#else
+	return -1;
+#endif
 }
 
 int VDSignalBase::wait(VDSignalBase *second, VDSignalBase *third) {
+#ifndef _LINUX_PORT
 	HANDLE		hArray[3];
 	DWORD		dwRet;
 
@@ -261,11 +335,15 @@ int VDSignalBase::wait(VDSignalBase *second, VDSignalBase *third) {
 	dwRet = WaitForMultipleObjects(3, hArray, FALSE, INFINITE);
 
 	return dwRet == WAIT_FAILED ? -1 : dwRet - WAIT_OBJECT_0;
+#else
+	return -1;
+#endif
 }
 
 int VDSignalBase::waitMultiple(const VDSignalBase **signals, int count) {
 	VDASSERT(count <= 16);
 
+#ifndef _LINUX_PORT
 	HANDLE handles[16];
 	int active = 0;
 
@@ -282,31 +360,47 @@ int VDSignalBase::waitMultiple(const VDSignalBase **signals, int count) {
 	DWORD dwRet = WaitForMultipleObjects(active, handles, FALSE, INFINITE);
 
 	return dwRet == WAIT_FAILED ? -1 : dwRet - WAIT_OBJECT_0;
+#else
+	return -1;
+#endif
 }
 
 bool VDSignalBase::tryWait(uint32 timeoutMillisec) {
+	#ifndef _LINUX_PORT
 	return WAIT_OBJECT_0 == WaitForSingleObject(hEvent, timeoutMillisec);
+#else
+	return false;
+#endif
 }
 
 void VDSignalPersistent::unsignal() {
+	#ifndef _LINUX_PORT
 	ResetEvent(hEvent);
+#endif
 }
 
 VDSemaphore::VDSemaphore(int initial)
+#ifndef _LINUX_PORT
 	: mKernelSema(CreateSemaphore(NULL, initial, 0x0fffffff, NULL))
+#else
+	: mKernelSema(NULL)
+#endif
 {
 }
 
 VDSemaphore::~VDSemaphore() {
-	if (mKernelSema)
-		CloseHandle(mKernelSema);
+#ifndef _LINUX_PORT
+	if (mKernelSema) CloseHandle(mKernelSema);
+#endif
 }
 
 void VDSemaphore::Reset(int count) {
+#ifndef _LINUX_PORT
 	// reset semaphore to zero
 	while(WAIT_OBJECT_0 == WaitForSingleObject(mKernelSema, 0))
 		;
 
 	if (count)
 		ReleaseSemaphore(mKernelSema, count, NULL);
+#endif
 }

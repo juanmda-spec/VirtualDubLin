@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 #include "stdafx.h"
 #include <windows.h>
 #include <commctrl.h>
@@ -121,7 +122,7 @@ void VDDialogFrameW32::BringToFront() {
 	if (!mhdlg)
 		return;
 
-	SetWindowPos(mhdlg, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);	
+	SetWindowPos(mhdlg, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 void VDDialogFrameW32::SetSize(const vdsize32& sz) {
@@ -528,7 +529,7 @@ void VDDialogFrameW32::ShowError(const wchar_t *message, const wchar_t *caption)
 
 bool VDDialogFrameW32::Confirm(const wchar_t *message, const wchar_t *caption) {
 	int result;
-	
+
 	if (VDIsWindowsNT())
 		result = ::MessageBoxW(mhdlg, message, caption, MB_OKCANCEL | MB_ICONEXCLAMATION);
 	else
@@ -609,7 +610,7 @@ void VDDialogFrameW32::LBAddString(uint32 id, const wchar_t *s) {
 	if (VDIsWindowsNT()) {
 		SendDlgItemMessageW(mhdlg, id, LB_ADDSTRING, 0, (LPARAM)s);
 	} else {
-		SendDlgItemMessageA(mhdlg, id, LB_ADDSTRING, 0, (LPARAM)VDTextWToA(s).c_str());		
+		SendDlgItemMessageA(mhdlg, id, LB_ADDSTRING, 0, (LPARAM)VDTextWToA(s).c_str());
 	}
 }
 
@@ -640,7 +641,7 @@ void VDDialogFrameW32::CBAddString(uint32 id, const wchar_t *s) {
 	if (VDIsWindowsNT()) {
 		SendDlgItemMessageW(mhdlg, id, CB_ADDSTRING, 0, (LPARAM)s);
 	} else {
-		SendDlgItemMessageA(mhdlg, id, CB_ADDSTRING, 0, (LPARAM)VDTextWToA(s).c_str());		
+		SendDlgItemMessageA(mhdlg, id, CB_ADDSTRING, 0, (LPARAM)VDTextWToA(s).c_str());
 	}
 }
 
@@ -996,3 +997,5 @@ void VDDialogResizerW32::Erase(const VDZHDC *phdc) {
 			ReleaseDC(mhwndBase, hdc);
 	}
 }
+
+#endif // _LINUX_PORT

@@ -34,3 +34,12 @@ obj/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# CMake build folder
+build/
+
+build_test/
+*.py
+*.sh
+
+build_test/

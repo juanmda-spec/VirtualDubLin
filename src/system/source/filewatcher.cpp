@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 #include "stdafx.h"
 #include <windows.h>
 #include <vd2/system/filesys.h>
@@ -155,3 +156,13 @@ void VDFileWatcher::StaticTimerCallback(void *, unsigned, unsigned, unsigned lon
 			mbRepeatRequested = !mpCB->OnFileUpdated(mPath.c_str());
 	}
 }
+
+#else
+#include "stdafx.h"
+#include <vd2/system/filewatcher.h>
+
+VDFileWatcher::VDFileWatcher() {}
+VDFileWatcher::~VDFileWatcher() {}
+void VDFileWatcher::Init(const wchar_t *file, IVDFileWatcherCallback *cb) {}
+bool VDFileWatcher::Wait(uint32 timeout) { return false; }
+#endif

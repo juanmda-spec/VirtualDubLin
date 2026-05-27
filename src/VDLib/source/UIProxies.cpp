@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 #include "stdafx.h"
 #include <windows.h>
 #include <commctrl.h>
@@ -721,7 +722,7 @@ bool VDUIProxyHotKeyControl::GetAccelerator(VDUIAccelerator& accel) const {
 
 	accel.mVirtKey = (uint8)v;
 	accel.mModifiers = 0;
-	
+
 	const uint8 mods = (uint8)(v >> 8);
 	if (mods & HOTKEYF_SHIFT)
 		accel.mModifiers |= VDUIAccelerator::kModShift;
@@ -1197,3 +1198,5 @@ VDZLRESULT VDUIProxyTreeViewControl::On_WM_NOTIFY(VDZWPARAM wParam, VDZLPARAM lP
 
 	return 0;
 }
+
+#endif // _LINUX_PORT

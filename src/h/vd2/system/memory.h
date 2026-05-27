@@ -40,7 +40,11 @@ struct VDAlignedObject {
 void *VDAlignedVirtualAlloc(size_t n);
 void VDAlignedVirtualFree(void *p);
 
+#ifndef _LINUX_PORT
 extern void (__cdecl *VDSwapMemory)(void *p0, void *p1, size_t bytes);
+#else
+extern void (*VDSwapMemory)(void *p0, void *p1, size_t bytes);
+#endif
 
 void VDInvertMemory(void *p, unsigned bytes);
 

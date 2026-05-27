@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -30,7 +31,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifndef _LINUX_PORT
 #include <windows.h>
+#endif
 
 #include <vd2/system/vdtypes.h>
 #include <vd2/system/vdstdc.h>
@@ -149,7 +152,7 @@ namespace {
 	}
 
 	bool VDIsUnicodeSurrogateFirst(wchar_t c) {
-		return (c >= 0xD800 && c < 0xDC00); 
+		return (c >= 0xD800 && c < 0xDC00);
 	}
 
 	bool VDIsUnicodeSurrogateSecond(wchar_t c) {
@@ -651,3 +654,17 @@ VDStringW VDswprintf(const wchar_t *format, int args, ...) {
 
 	return r;
 }
+
+#else
+
+#include "stdafx.h"
+#include <vd2/system/text.h>
+#include <vd2/system/vdtypes.h>
+#include <vd2/system/VDString.h>
+
+void VDTextAppendAFromW(VDStringA& dst, const wchar_t *s, int len) {}
+void VDTextAppendWFromA(VDStringW& dst, const char *s, int len) {}
+void VDTextAppendU8FromW(VDStringA& dst, const wchar_t *s, int len) {}
+void VDTextAppendWFromU8(VDStringW& dst, const char *s, int len) {}
+
+#endif

@@ -1,3 +1,19 @@
+#ifdef _LINUX_PORT
+#include <stdint.h>
+typedef uintptr_t uintptr;
+typedef intptr_t intptr;
+#define VDNORETURN __attribute__((noreturn))
+#endif
+#ifdef _LINUX_PORT
+#include <stdint.h>
+#define uintptr uintptr_t
+#define intptr intptr_t
+#endif
+#ifdef _LINUX_PORT
+#include <stdint.h>
+typedef uintptr_t uintptr;
+typedef intptr_t intptr;
+#endif
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2007 Avery Lee, All Rights Reserved.
@@ -123,7 +139,11 @@
 			typedef __w64 uint32 uintptr;
 		#else
 			typedef sint32 sintptr;
+			#ifndef _LINUX_PORT
+			#ifndef _LINUX_PORT
 			typedef uint32 uintptr;
+			#endif
+			#endif
 		#endif
 	#endif
 #endif
@@ -136,7 +156,7 @@
 	#error Please add an entry for your compiler for 64-bit constant literals.
 #endif
 
-	
+
 #define VDAPIENTRY			__cdecl
 
 typedef int64 VDTime;
@@ -155,7 +175,12 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#if defined(VD_COMPILER_MSVC) && (VD_COMPILER_MSVC < 1300 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
+#ifdef _LINUX_PORT
+	#include <stdint.h>
+	typedef uintptr_t uintptr;
+	typedef intptr_t intptr;
+#elif defined(VD_COMPILER_MSVC)
+ && (VD_COMPILER_MSVC < 1300 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
 #define new_nothrow new
 #else
 #define new_nothrow new(std::nothrow)
@@ -194,7 +219,12 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#if defined(VD_COMPILER_MSVC) && (VD_COMPILER_MSVC < 1400 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
+#ifdef _LINUX_PORT
+	#include <stdint.h>
+	typedef uintptr_t uintptr;
+	typedef intptr_t intptr;
+#elif defined(VD_COMPILER_MSVC)
+ && (VD_COMPILER_MSVC < 1400 || (defined(VD_COMPILER_MSVC_VC8_PSDK) || defined(VD_COMPILER_MSVC_VC8_DDK)))
 	inline int vswprintf(wchar_t *dst, size_t bufsize, const wchar_t *format, va_list val) {
 		return _vsnwprintf(dst, bufsize, format, val);
 	}
@@ -217,7 +247,12 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 	#define _wcsnicmp wcsnicmp
 #endif
 
-#if defined(VD_COMPILER_MSVC) && VD_COMPILER_MSVC < 1400
+#ifdef _LINUX_PORT
+	#include <stdint.h>
+	typedef uintptr_t uintptr;
+	typedef intptr_t intptr;
+#elif defined(VD_COMPILER_MSVC)
+ && VD_COMPILER_MSVC < 1400
 	#define vdfor if(0);else for
 #else
 	#define vdfor for
@@ -229,9 +264,16 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#if defined(VD_COMPILER_MSVC)
+#ifdef _LINUX_PORT
+	#include <stdint.h>
+	typedef uintptr_t uintptr;
+	typedef intptr_t intptr;
+#elif defined(VD_COMPILER_MSVC)
+
 	#define VDINTERFACE			__declspec(novtable)
+	#ifndef _LINUX_PORT
 	#define VDNORETURN			__declspec(noreturn)
+	#endif
 	#define VDPUREFUNC
 
 	#if VD_COMPILER_MSVC >= 1400
@@ -253,7 +295,9 @@ typedef	struct __VDGUIHandle *VDGUIHandle;
 	#define VDALIGN(alignment)	__attribute__((aligned(alignment)))
 #else
 	#define VDINTERFACE
+	#ifndef _LINUX_PORT
 	#define VDNORETURN
+	#endif
 	#define VDPUREFUNC
 	#define VDRESTRICT
 	#define VDFORCEINLINE
@@ -355,7 +399,12 @@ extern void VDDebugPrint(const char *format, ...);
 	#define VDINLINEASSERT(exp)	(exp)
 	#define VDINLINEASSERTFALSE(exp)	(exp)
 
-	#if defined(VD_COMPILER_MSVC)
+	#ifdef _LINUX_PORT
+	#include <stdint.h>
+	typedef uintptr_t uintptr;
+	typedef intptr_t intptr;
+#elif defined(VD_COMPILER_MSVC)
+
 		#define NEVER_HERE			__assume(false)
 		#define	VDNEVERHERE			__assume(false)
 	#else
@@ -429,7 +478,12 @@ extern void VDDebugPrint(const char *format, ...);
 // This avoids the conversion operator but unfortunately usually generates
 // an actual loop in the output.
 
-#if defined(VD_COMPILER_MSVC) && (VD_COMPILER_MSVC < 1400 || defined(VD_COMPILER_MSVC_VC8_DDK))
+#ifdef _LINUX_PORT
+	#include <stdint.h>
+	typedef uintptr_t uintptr;
+	typedef intptr_t intptr;
+#elif defined(VD_COMPILER_MSVC)
+ && (VD_COMPILER_MSVC < 1400 || defined(VD_COMPILER_MSVC_VC8_DDK))
 #define vdobjectscope(object_def) if(object_def) VDNEVERHERE; else
 #else
 #define vdobjectscope(object_def) switch(object_def) case 0: default:

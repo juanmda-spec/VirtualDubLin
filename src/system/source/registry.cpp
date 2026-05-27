@@ -1,3 +1,8 @@
+
+#ifndef _LINUX_PORT
+
+
+
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -107,7 +112,7 @@ void VDRegistryProviderW32::CloseKey(void *key) {
 
 bool VDRegistryProviderW32::SetBool(void *key, const char *pszName, bool val) {
 	DWORD dw = val;
-	
+
 	return !RegSetValueEx((HKEY)key, pszName, 0, REG_DWORD, (const BYTE *)&dw, sizeof dw);
 }
 
@@ -478,3 +483,33 @@ VDRegistryAppKey::VDRegistryAppKey(const char *pszKey, bool write, bool global)
 void VDRegistryAppKey::setDefaultKey(const char *pszAppName) {
 	s_appbase = pszAppName;
 }
+
+
+
+
+#else
+#include "stdafx.h"
+#include <vd2/system/registry.h>
+
+bool VDRegistryKey::setInt(const char *name, int) const { return false; }
+bool VDRegistryKey::setString(const char *name, const char *pszString) const { return false; }
+bool VDRegistryKey::setString(const char *name, const wchar_t *pszString) const { return false; }
+bool VDRegistryKey::setBinary(const char *name, const char *pData, int len) const { return false; }
+
+int VDRegistryKey::getInt(const char *name, int def) const { return def; }
+bool VDRegistryKey::getString(const char *name, VDStringA& s) const { return false; }
+bool VDRegistryKey::getString(const char *name, VDStringW& s) const { return false; }
+bool VDRegistryKey::getBinary(const char *name, char *pData, int maxlen) const { return false; }
+
+bool VDRegistryKey::removeValue(const char *) { return false; }
+bool VDRegistryKey::removeKey(const char *) { return false; }
+
+VDRegistryValueIterator::VDRegistryValueIterator(const VDRegistryKey& key) {}
+VDRegistryValueIterator::~VDRegistryValueIterator() {}
+const char *VDRegistryValueIterator::Next() { return NULL; }
+
+VDRegistryKeyIterator::VDRegistryKeyIterator(const VDRegistryKey& key) {}
+VDRegistryKeyIterator::~VDRegistryKeyIterator() {}
+const char *VDRegistryKeyIterator::Next() { return NULL; }
+
+#endif

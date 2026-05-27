@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -428,3 +429,36 @@ void *VDFile::AllocUnbuffer(size_t nBytes) {
 void VDFile::FreeUnbuffer(void *p) {
 	VirtualFree(p, 0, MEM_RELEASE);
 }
+
+#else
+// Stub file.cpp on Linux for now
+#include "stdafx.h"
+#include <vd2/system/Error.h>
+#include <vd2/system/filesys.h>
+#include <vd2/system/VDString.h>
+#include <vd2/system/file.h>
+#include <vd2/system/math.h>
+
+VDFile::VDFile(const char *pszFileName, uint32 flags) {}
+VDFile::VDFile(const wchar_t *pwszFileName, uint32 flags) {}
+VDFile::VDFile(VDFileHandle h) {}
+VDFile::~VDFile() {}
+bool VDFile::openNT(const wchar_t *pwszFileName, uint32 flags) { return false; }
+void VDFile::open(const char *pszFileName, uint32 flags) {}
+void VDFile::open(const wchar_t *pwszFileName, uint32 flags) {}
+void VDFile::close() {}
+long VDFile::readData(void *buffer, long length) { return 0; }
+void VDFile::read(void *buffer, long length) {}
+long VDFile::writeData(const void *buffer, long length) { return 0; }
+void VDFile::write(const void *buffer, long length) {}
+bool VDFile::seekNT(sint64 offset, nsVDFile::eSeekMode mode) { return false; }
+void VDFile::seek(sint64 offset, nsVDFile::eSeekMode mode) {}
+void VDFile::skip(sint64 offset) {}
+sint64 VDFile::size() { return 0; }
+bool VDFile::flushNT() { return false; }
+void VDFile::flush() {}
+bool VDFile::isOpen() { return false; }
+VDFileHandle VDFile::getRawHandle() { return NULL; }
+void *VDFile::AllocUnbuffer(size_t nBytes) { return NULL; }
+void VDFile::FreeUnbuffer(void *p) {}
+#endif

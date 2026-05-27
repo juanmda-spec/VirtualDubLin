@@ -41,7 +41,7 @@ public:
 	};
 };
 
-VDFORCEINLINE vdint2 operator*(const int s, const vdint2& v) { return v*s; }
+inline vdint2 operator*(const int s, const vdint2& v) { return v*s; }
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -90,7 +90,7 @@ public:
 	};
 };
 
-VDFORCEINLINE vdint3 operator*(const int s, const vdint3& v) { return v*s; }
+inline vdint3 operator*(const int s, const vdint3& v) { return v*s; }
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -139,44 +139,44 @@ public:
 	};
 };
 
-VDFORCEINLINE vdint4 operator*(const int s, const vdint4& v) { return v*s; }
+inline vdint4 operator*(const int s, const vdint4& v) { return v*s; }
 
 ///////////////////////////////////////////////////////////////////////////
 
 class vdint2c : vdint2 {
 public:
-	VDFORCEINLINE vdint2c(int x2, int y2) {x=x2; y=y2;}
-	VDFORCEINLINE vdint2c(const int src[2]) {x=src[0]; y=src[1];}
+	inline vdint2c(int x2, int y2) {x=x2; y=y2;}
+	inline vdint2c(const int src[2]) {x=src[0]; y=src[1];}
 };
 
 class vdint3c : vdint3 {
 public:
-	VDFORCEINLINE vdint3c(int x2, int y2, int z2) { x=x2; y=y2; z=z2; }
-	VDFORCEINLINE vdint3c(const int src[3]) { x=src[0]; y=src[1]; z=src[2]; }
+	inline vdint3c(int x2, int y2, int z2) { x=x2; y=y2; z=z2; }
+	inline vdint3c(const int src[3]) { x=src[0]; y=src[1]; z=src[2]; }
 };
 
 class vdint4c : vdint4 {
 public:
-	VDFORCEINLINE vdint4c(int x2, int y2, int z2, int w2) { x=x2; y=y2; z=z2; w=w2; }
-	VDFORCEINLINE vdint4c(const int src[4]) { x=src[0]; y=src[1]; z=src[2]; w=src[3]; }
+	inline vdint4c(int x2, int y2, int z2, int w2) { x=x2; y=y2; z=z2; w=w2; }
+	inline vdint4c(const int src[4]) { x=src[0]; y=src[1]; z=src[2]; w=src[3]; }
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 namespace nsVDMath {
-	VDFORCEINLINE int dot(const vdint2& a, const vdint2& b) {
+	inline int dot(const vdint2& a, const vdint2& b) {
 		return a.x*b.x + a.y*b.y;
 	}
 
-	VDFORCEINLINE int dot(const vdint3& a, const vdint3& b) {
+	inline int dot(const vdint3& a, const vdint3& b) {
 		return a.x*b.x + a.y*b.y + a.z*b.z;
 	}
 
-	VDFORCEINLINE int dot(const vdint4& a, const vdint4& b) {
+	inline int dot(const vdint4& a, const vdint4& b) {
 		return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
 	}
 
-	VDFORCEINLINE vdint3 cross(const vdint3& a, const vdint3& b) {
+	inline vdint3 cross(const vdint3& a, const vdint3& b) {
 		const vdint3 r = {a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x};
 		return r;
 	}

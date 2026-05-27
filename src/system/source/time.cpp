@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -279,3 +280,22 @@ void VDLazyTimer::StaticTimeCallback(VDZHWND hwnd, VDZUINT msg, VDZUINT_PTR id, 
 	if (mpCB)
 		mpCB->TimerCallback();
 }
+
+#else
+#include "stdafx.h"
+#include <vd2/system/time.h>
+#include <time.h>
+
+uint32 VDGetTickCount() {
+    return 0; // Stub
+}
+
+sint64 VDGetTime100ns() {
+    return 0; // Stub
+}
+
+
+
+
+
+#endif

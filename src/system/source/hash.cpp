@@ -1,3 +1,5 @@
+#include <wchar.h>
+#include <wchar.h>
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2007 Avery Lee, All Rights Reserved.

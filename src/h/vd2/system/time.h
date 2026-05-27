@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -63,7 +64,7 @@ uint32 VDGetAccurateTick();
 // callback.  Execution time in the callback delays other timers, however, so the
 // callback should still execute as quickly as possible.
 
-class VDINTERFACE IVDTimerCallback {
+class IVDTimerCallback {
 public:
 	virtual void TimerCallback() = 0;
 };
@@ -117,4 +118,24 @@ protected:
 	IVDTimerCallback	*mpCB;
 };
 
+#endif
+
+#else
+
+#ifndef f_VD2_SYSTEM_TIME_H
+#define f_VD2_SYSTEM_TIME_H
+
+#include <vd2/system/vdtypes.h>
+
+class IVDTimerCallback {
+public:
+	virtual void OnTimer() = 0;
+};
+
+uint32 VDGetTickCount();
+sint64 VDGetTime100ns();
+inline uint64 VDGetPreciseTicksPerSecondI() { return 1000000; }
+inline uint64 VDGetPreciseTick() { return 0; }
+
+#endif
 #endif

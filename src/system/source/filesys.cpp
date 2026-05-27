@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2004 Avery Lee, All Rights Reserved.
@@ -1194,3 +1195,42 @@ bool VDDirectoryIterator::IsDotDirectory() const {
 
 	return !s[1] || (s[1] == L'.' && !s[2]);
 }
+
+#else
+#include "stdafx.h"
+#include <vd2/system/filesys.h>
+#include <vd2/system/Error.h>
+#include <vd2/system/VDString.h>
+
+bool VDFileExists(const char *path) { return false; }
+bool VDFileExists(const wchar_t *path) { return false; }
+bool VDDirectoryExists(const char *path) { return false; }
+bool VDDirectoryExists(const wchar_t *path) { return false; }
+void VDCreateDirectory(const char *path) {}
+void VDCreateDirectory(const wchar_t *path) {}
+void VDRemoveDirectory(const char *path) {}
+void VDRemoveDirectory(const wchar_t *path) {}
+void VDDeleteFile(const char *path) {}
+void VDDeleteFile(const wchar_t *path) {}
+void VDRenameFile(const char *oldpath, const char *newpath) {}
+void VDRenameFile(const wchar_t *oldpath, const wchar_t *newpath) {}
+bool VDGetFileModificationTime(const wchar_t *path, VDDate& dt) { return false; }
+bool VDSetFileModificationTime(const wchar_t *path, const VDDate& dt) { return false; }
+VDStringW VDGetFullPath(const wchar_t *path) { return VDStringW(); }
+void VDGetSystemDirectory(VDStringW& dst) {}
+void VDGetWindowsDirectory(VDStringW& dst) {}
+void VDGetModulePath(VDStringW& dst, void *module) {}
+void VDGetModulePath(VDStringA& dst, void *module) {}
+void VDGetTempPath(VDStringW& dst) {}
+void VDSetCurrentDirectory(const wchar_t *path) {}
+void VDGetCurrentDirectory(VDStringW& dst) {}
+void VDGetShortPathName(VDStringW& dst, const wchar_t *path) {}
+
+VDDirectoryIterator::VDDirectoryIterator(const wchar_t *path) {}
+VDDirectoryIterator::~VDDirectoryIterator() {}
+bool VDDirectoryIterator::Next() { return false; }
+
+bool VDGetLogicalDrives(VDStringW& dst) { return false; }
+bool VDGetVolumeLabel(VDStringW& dst, const wchar_t *path) { return false; }
+
+#endif

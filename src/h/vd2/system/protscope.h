@@ -1,3 +1,4 @@
+#define vdobjectscope(x) if (bool _vd_dummy = false) {} else if (x) {} else
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2007 Avery Lee, All Rights Reserved.

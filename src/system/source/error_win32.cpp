@@ -1,3 +1,4 @@
+#ifndef _LINUX_PORT
 //	VirtualDub - Video processing and capture application
 //	System library component
 //	Copyright (C) 1998-2012 Avery Lee, All Rights Reserved.
@@ -174,3 +175,5 @@ MyWin32Error::MyWin32Error(const char *format, uint32 err, ...)
 
 	setf(szTemp, szError);
 }
+
+#endif
