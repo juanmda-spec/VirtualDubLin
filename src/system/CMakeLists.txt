@@ -48,7 +48,7 @@ add_library(vdsystem STATIC
     source/vdstl_hash.cpp
     source/vdstl_hashtable.cpp
     source/vectors.cpp
-    source/w32assist.cpp
+
     source/zip.cpp
 )
 

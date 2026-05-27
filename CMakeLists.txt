@@ -23,3 +23,4 @@ add_subdirectory(src/VDLib)
 
 # Main executable (stub for now, will be replaced by native UI in phase 3)
 # add_subdirectory(src/VirtualDub)
+add_subdirectory(src/gui-qt)

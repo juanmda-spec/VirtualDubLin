@@ -141,7 +141,15 @@ bool VDThread::ThreadStart() {
 
 		if (mhThread && mThreadPriority != INT_MIN)
 			::SetThreadPriority(mhThread, mThreadPriority);
-#endif
+	#else
+		pthread_t *pt = new pthread_t;
+		if (pthread_create(pt, NULL, (void* (*)(void*))StaticThreadStart, this) == 0) {
+			mhThread = (void *)pt;
+			mThreadID = (VDThreadID)*pt;
+		} else {
+			delete pt;
+		}
+	#endif
 	}
 
 	return mhThread != 0;
@@ -151,6 +159,9 @@ void VDThread::ThreadDetach() {
 	if (isThreadAttached()) {
 #ifndef _LINUX_PORT
 		CloseHandle((HANDLE)mhThread);
+#else
+		pthread_detach(*(pthread_t*)mhThread);
+		delete (pthread_t*)mhThread;
 #endif
 		mhThread = NULL;
 		mThreadID = 0;
@@ -161,6 +172,8 @@ void VDThread::ThreadWait() {
 	if (isThreadAttached()) {
 #ifndef _LINUX_PORT
 		WaitForSingleObject((HANDLE)mhThread, INFINITE);
+#else
+		pthread_join(*(pthread_t*)mhThread, NULL);
 #endif
 		ThreadDetach();
 		mThreadID = 0;
