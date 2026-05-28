@@ -5,6 +5,7 @@ FFmpegDecoder::FFmpegDecoder() {
     pPacket = av_packet_alloc();
     pFrame = av_frame_alloc();
     pFrameRGB = av_frame_alloc();
+    pAudioFrame = av_frame_alloc();
 }
 
 FFmpegDecoder::~FFmpegDecoder() {
@@ -12,6 +13,7 @@ FFmpegDecoder::~FFmpegDecoder() {
     if (pPacket) av_packet_free(&pPacket);
     if (pFrame) av_frame_free(&pFrame);
     if (pFrameRGB) av_frame_free(&pFrameRGB);
+    if (pAudioFrame) av_frame_free(&pAudioFrame);
 }
 
 bool FFmpegDecoder::openFile(const QString &filename) {
@@ -56,6 +58,28 @@ bool FFmpegDecoder::openFile(const QString &filename) {
     if (avcodec_open2(pCodecContext, pCodec, nullptr) < 0) {
         qDebug() << "Failed to open codec";
         return false;
+    }
+
+
+    // Find audio stream
+    const AVCodec *pAudioCodec = nullptr;
+    for (unsigned int i = 0; i < pFormatContext->nb_streams; i++) {
+        AVStream *stream = pFormatContext->streams[i];
+        if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            audioStreamIndex = i;
+            pAudioCodec = avcodec_find_decoder(stream->codecpar->codec_id);
+            break;
+        }
+    }
+
+    if (audioStreamIndex != -1 && pAudioCodec) {
+        pAudioCodecContext = avcodec_alloc_context3(pAudioCodec);
+        avcodec_parameters_to_context(pAudioCodecContext, pFormatContext->streams[audioStreamIndex]->codecpar);
+        if (avcodec_open2(pAudioCodecContext, pAudioCodec, nullptr) < 0) {
+            qDebug() << "Failed to open audio codec";
+        } else {
+            qDebug() << "Audio stream found and codec opened successfully";
+        }
     }
 
     // 5. Setup SwsContext for color conversion (YUV -> RGB24)
@@ -119,4 +143,43 @@ void FFmpegDecoder::close() {
     if (pCodecContext) { avcodec_free_context(&pCodecContext); pCodecContext = nullptr; }
     if (pFormatContext) { avformat_close_input(&pFormatContext); pFormatContext = nullptr; }
     videoStreamIndex = -1;
+    audioStreamIndex = -1;
+    if (pAudioCodecContext) { avcodec_free_context(&pAudioCodecContext); pAudioCodecContext = nullptr; }
+}
+
+bool FFmpegDecoder::decodeNextAudioFrame(uint8_t* audioBuffer, int& outSize) {
+    if (!pFormatContext || !pAudioCodecContext) return false;
+
+    // Simplistic audio decoding loop
+    while (av_read_frame(pFormatContext, pPacket) >= 0) {
+        if (pPacket->stream_index == audioStreamIndex) {
+            int response = avcodec_send_packet(pAudioCodecContext, pPacket);
+            if (response < 0 && response != AVERROR(EAGAIN)) {
+                av_packet_unref(pPacket);
+                return false;
+            }
+
+            response = avcodec_receive_frame(pAudioCodecContext, pAudioFrame);
+            if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+                av_packet_unref(pPacket);
+                continue;
+            } else if (response < 0) {
+                av_packet_unref(pPacket);
+                return false;
+            }
+
+            // In a real scenario we'd use libswresample to convert to target output format here.
+            // For MVP audio support, we just copy raw PCM data if planar/packed fits.
+            int data_size = av_get_bytes_per_sample(pAudioCodecContext->sample_fmt);
+            if (data_size > 0) {
+                outSize = pAudioFrame->nb_samples * pAudioCodecContext->ch_layout.nb_channels * data_size;
+                memcpy(audioBuffer, pAudioFrame->data[0], outSize);
+            }
+
+            av_packet_unref(pPacket);
+            return true;
+        }
+        av_packet_unref(pPacket);
+    }
+    return false;
 }

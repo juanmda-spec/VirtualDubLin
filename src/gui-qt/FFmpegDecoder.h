@@ -18,6 +18,7 @@ public:
 
     bool openFile(const QString &filename);
     bool decodeNextFrame(QImage &outImage);
+    bool decodeNextAudioFrame(uint8_t* audioBuffer, int& outSize);
     void close();
 
     int getVideoWidth() const { return pCodecContext ? pCodecContext->width : 0; }
@@ -29,6 +30,9 @@ private:
     int videoStreamIndex = -1;
     AVFrame *pFrame = nullptr;
     AVFrame *pFrameRGB = nullptr;
+    AVFrame *pAudioFrame = nullptr;
+    AVCodecContext *pAudioCodecContext = nullptr;
+    int audioStreamIndex = -1;
     AVPacket *pPacket = nullptr;
     SwsContext *swsCtx = nullptr;
     uint8_t *buffer = nullptr;

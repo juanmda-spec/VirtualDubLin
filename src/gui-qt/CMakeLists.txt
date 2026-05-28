@@ -17,6 +17,7 @@ set(GUI_SOURCES
     mainwindow.cpp
     mainwindow.h
     FFmpegDecoder.cpp
+    FFmpegEncoder.cpp
     CudaFilter_dummy.cpp
 )
 
