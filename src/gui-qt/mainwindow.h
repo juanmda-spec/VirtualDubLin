@@ -11,11 +11,9 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QTimer>
-#include <QStatusBar>
-#include <QToolBar>
 #include "FFmpegDecoder.h"
-#include "FFmpegEncoder.h"
 #include "CudaFilter.h"
+#include "JobControlDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -30,53 +28,29 @@ private slots:
     void updateFrame();
     void playVideo();
     void stopVideo();
-    void showFiltersDialog();
-    void showCompressionDialog();
-    void exportVideo();
+    void exportImageSequence();
+    void setDirectStreamCopy();
+    void setFullProcessingMode();
+    void queueJob();
+    void showJobControl();
+    void runJobs();
 
 private:
-    void createMenus();
-    void createControls();
-
-    // UI Elements
     QLabel *inputVideoLabel;
     QLabel *outputVideoLabel;
     QSlider *timelineSlider;
-    QLabel *positionLabel;
+    QPushButton *playButton;
+    QPushButton *stopButton;
 
-    // Transport controls
-    QPushButton *btnStop;
-    QPushButton *btnPlayInput;
-    QPushButton *btnPlayOutput;
-    QPushButton *btnPrevFrame;
-    QPushButton *btnNextFrame;
-    QPushButton *btnPrevKeyframe;
-    QPushButton *btnNextKeyframe;
-    QPushButton *btnSceneRev;
-    QPushButton *btnSceneFwd;
-    QPushButton *btnMarkIn;
-    QPushButton *btnMarkOut;
-
-    // Menus
-    QMenu *fileMenu;
-    QMenu *editMenu;
-    QMenu *viewMenu;
-    QMenu *goMenu;
-    QMenu *videoMenu;
-    QMenu *audioMenu;
-    QMenu *optionsMenu;
-    QMenu *toolsMenu;
-    QMenu *helpMenu;
-
-    // Engine
     FFmpegDecoder decoder;
-    FFmpegEncoder encoder;
-    QString selectedCodec = "libx264";
-    int selectedBitrate = 4000000;
-    bool isExporting = false;
     CudaFilter cudaFilter;
     QTimer *playbackTimer;
     bool isPlaying = false;
+    bool directStreamCopy = false;
+    QAction* directStreamCopyAct;
+    QAction* fullProcessingModeAct;
+    JobControlDialog* jobControl;
+    QString currentFile;
 };
 
 #endif // MAINWINDOW_H

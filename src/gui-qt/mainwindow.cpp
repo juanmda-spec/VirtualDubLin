@@ -1,157 +1,123 @@
+#include <QInputDialog>
+#include <QStatusBar>
 #include "mainwindow.h"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
 #include <QPixmap>
-#include <QInputDialog>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setWindowTitle("VirtualDub - Linux Native");
-    resize(1024, 768);
+    setWindowTitle("VirtualDub - Linux Native (Qt + FFmpeg)");
+    resize(800, 600);
 
-    createMenus();
+    // Menu
+
+    QMenu *videoMenu = menuBar()->addMenu(tr("&Video"));
+    directStreamCopyAct = new QAction(tr("&Direct stream copy"), this);
+    directStreamCopyAct->setCheckable(true);
+    videoMenu->addAction(directStreamCopyAct);
+    connect(directStreamCopyAct, &QAction::triggered, this, &MainWindow::setDirectStreamCopy);
+
+    fullProcessingModeAct = new QAction(tr("&Full processing mode"), this);
+    fullProcessingModeAct->setCheckable(true);
+    fullProcessingModeAct->setChecked(true); // Default
+    videoMenu->addAction(fullProcessingModeAct);
+    connect(fullProcessingModeAct, &QAction::triggered, this, &MainWindow::setFullProcessingMode);
+
+    QMenu *fileMenu = menuBar()->addMenu(tr("&Archivo"));
+    QAction *openAct = new QAction(tr("&Abrir archivo de video..."), this);
+    fileMenu->addAction(openAct);
+    connect(openAct, &QAction::triggered, this, &MainWindow::openVideo);
+
+
+    QAction *exportImgAct = new QAction(tr("Export &Image sequence..."), this);
+    fileMenu->addAction(exportImgAct);
+    connect(exportImgAct, &QAction::triggered, this, &MainWindow::exportImageSequence);
+
+    fileMenu->addSeparator();
+
+    QAction *queueAct = new QAction(tr("Save as AVI... (Queue job)"), this);
+    fileMenu->addAction(queueAct);
+    connect(queueAct, &QAction::triggered, this, &MainWindow::queueJob);
+
+    QAction *jobControlAct = new QAction(tr("&Job Control..."), this);
+    jobControlAct->setShortcut(QKeySequence("F4"));
+    fileMenu->addAction(jobControlAct);
+    connect(jobControlAct, &QAction::triggered, this, &MainWindow::showJobControl);
+
+    QAction *exitAct = new QAction(tr("&Salir"), this);
+    fileMenu->addAction(exitAct);
+    connect(exitAct, &QAction::triggered, this, &QWidget::close);
 
     // Central Widget
     QWidget *centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
+
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
-    mainLayout->setContentsMargins(0,0,0,0);
-    mainLayout->setSpacing(0);
 
     // Video Panels
-    QWidget *videoContainer = new QWidget(this);
-    QHBoxLayout *videoLayout = new QHBoxLayout(videoContainer);
-    videoLayout->setContentsMargins(5,5,5,5);
+    QHBoxLayout *videoLayout = new QHBoxLayout();
 
-    inputVideoLabel = new QLabel("Input Video", this);
-    inputVideoLabel->setStyleSheet("background-color: #202020; color: #808080; border: 1px solid #404040;");
+    inputVideoLabel = new QLabel("Video de Entrada", this);
+    inputVideoLabel->setStyleSheet("background-color: black; color: white;");
     inputVideoLabel->setAlignment(Qt::AlignCenter);
     inputVideoLabel->setMinimumSize(320, 240);
 
-    outputVideoLabel = new QLabel("Output Video", this);
-    outputVideoLabel->setStyleSheet("background-color: #202020; color: #808080; border: 1px solid #404040;");
+    outputVideoLabel = new QLabel("Video de Salida", this);
+    outputVideoLabel->setStyleSheet("background-color: black; color: white;");
     outputVideoLabel->setAlignment(Qt::AlignCenter);
     outputVideoLabel->setMinimumSize(320, 240);
 
     videoLayout->addWidget(inputVideoLabel, 1);
     videoLayout->addWidget(outputVideoLabel, 1);
 
-    mainLayout->addWidget(videoContainer, 1);
+    mainLayout->addLayout(videoLayout, 1);
 
-    createControls();
-    mainLayout->addWidget(timelineSlider);
+    // Timeline and controls
+    QHBoxLayout *controlsLayout = new QHBoxLayout();
+
+    playButton = new QPushButton("Play", this);
+    stopButton = new QPushButton("Stop", this);
+    timelineSlider = new QSlider(Qt::Horizontal, this);
+
+    controlsLayout->addWidget(playButton);
+    controlsLayout->addWidget(stopButton);
+    controlsLayout->addWidget(timelineSlider);
+
+    mainLayout->addLayout(controlsLayout);
 
     // Playback timer
     playbackTimer = new QTimer(this);
+    jobControl = new JobControlDialog(this);
+    connect(jobControl, &JobControlDialog::startJobs, this, &MainWindow::runJobs);
     connect(playbackTimer, &QTimer::timeout, this, &MainWindow::updateFrame);
 
-    statusBar()->showMessage("Frame 0 (0:00:00.000) [K]   |   Video: Uncompressed RGB   |   Audio: No audio");
+    connect(playButton, &QPushButton::clicked, this, &MainWindow::playVideo);
+    connect(stopButton, &QPushButton::clicked, this, &MainWindow::stopVideo);
 }
 
-MainWindow::~MainWindow() {}
-
-void MainWindow::createMenus() {
-    fileMenu = menuBar()->addMenu(tr("&File"));
-    QAction *openAct = new QAction(tr("&Open video file..."), this);
-    openAct->setShortcut(QKeySequence::Open);
-    fileMenu->addAction(openAct);
-    connect(openAct, &QAction::triggered, this, &MainWindow::openVideo);
-
-    fileMenu->addSeparator();
-    QAction *exportAct = new QAction(tr("&Export video..."), this);
-    fileMenu->addAction(exportAct);
-    connect(exportAct, &QAction::triggered, this, &MainWindow::exportVideo);
-
-    QAction *exitAct = new QAction(tr("E&xit"), this);
-    fileMenu->addAction(exitAct);
-    connect(exitAct, &QAction::triggered, this, &QWidget::close);
-
-    editMenu = menuBar()->addMenu(tr("&Edit"));
-    viewMenu = menuBar()->addMenu(tr("&View"));
-    goMenu = menuBar()->addMenu(tr("&Go"));
-
-    videoMenu = menuBar()->addMenu(tr("V&ideo"));
-    QAction *filtersAct = new QAction(tr("&Filters..."), this);
-    filtersAct->setShortcut(QKeySequence("Ctrl+F"));
-    videoMenu->addAction(filtersAct);
-    connect(filtersAct, &QAction::triggered, this, &MainWindow::showFiltersDialog);
-
-    QAction *compressionAct = new QAction(tr("&Compression..."), this);
-    compressionAct->setShortcut(QKeySequence("Ctrl+P"));
-    videoMenu->addAction(compressionAct);
-    connect(compressionAct, &QAction::triggered, this, &MainWindow::showCompressionDialog);
-
-    audioMenu = menuBar()->addMenu(tr("&Audio"));
-    optionsMenu = menuBar()->addMenu(tr("&Options"));
-    toolsMenu = menuBar()->addMenu(tr("&Tools"));
-    helpMenu = menuBar()->addMenu(tr("&Help"));
-}
-
-void MainWindow::createControls() {
-    QToolBar *transportBar = new QToolBar(this);
-    transportBar->setMovable(false);
-    transportBar->setIconSize(QSize(24, 24));
-
-    btnStop = new QPushButton("[]", this);
-    btnPlayInput = new QPushButton(">I", this);
-    btnPlayOutput = new QPushButton(">O", this);
-    btnPrevFrame = new QPushButton("<|", this);
-    btnNextFrame = new QPushButton("|>", this);
-    btnPrevKeyframe = new QPushButton("<<", this);
-    btnNextKeyframe = new QPushButton(">>", this);
-    btnSceneRev = new QPushButton("<-", this);
-    btnSceneFwd = new QPushButton("->", this);
-    btnMarkIn = new QPushButton("[<", this);
-    btnMarkOut = new QPushButton(">]", this);
-
-    connect(btnStop, &QPushButton::clicked, this, &MainWindow::stopVideo);
-    connect(btnPlayInput, &QPushButton::clicked, this, &MainWindow::playVideo);
-    connect(btnPlayOutput, &QPushButton::clicked, this, &MainWindow::playVideo);
-
-    transportBar->addWidget(btnStop);
-    transportBar->addWidget(btnPlayInput);
-    transportBar->addWidget(btnPlayOutput);
-    transportBar->addSeparator();
-    transportBar->addWidget(btnPrevFrame);
-    transportBar->addWidget(btnNextFrame);
-    transportBar->addWidget(btnPrevKeyframe);
-    transportBar->addWidget(btnNextKeyframe);
-    transportBar->addWidget(btnSceneRev);
-    transportBar->addWidget(btnSceneFwd);
-    transportBar->addSeparator();
-    transportBar->addWidget(btnMarkIn);
-    transportBar->addWidget(btnMarkOut);
-
-    addToolBar(Qt::BottomToolBarArea, transportBar);
-
-    timelineSlider = new QSlider(Qt::Horizontal, this);
-    timelineSlider->setMinimumHeight(24);
-
-    positionLabel = new QLabel("Frame 0", this);
-    positionLabel->setMinimumWidth(80);
-    positionLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-
-    QToolBar *posBar = new QToolBar(this);
-    posBar->setMovable(false);
-    posBar->addWidget(timelineSlider);
-    posBar->addWidget(positionLabel);
-    addToolBar(Qt::BottomToolBarArea, posBar);
-
+MainWindow::~MainWindow()
+{
 }
 
 void MainWindow::openVideo()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Video File"), "", tr("Video Files (*.avi *.mp4 *.mkv *.mov);;All Files (*.*)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Abrir Video"), "", tr("Archivos de Video (*.avi *.mp4 *.mkv *.mov);;Todos los archivos (*.*)"));
     if (!fileName.isEmpty()) {
+        currentFile = fileName;
         if (decoder.openFile(fileName)) {
-            qDebug() << "File opened successfully:" << fileName;
+            qDebug() << "Archivo abierto con éxito:" << fileName;
+            qDebug() << "Resolución:" << decoder.getVideoWidth() << "x" << decoder.getVideoHeight();
+
+            // Iniciar filtro CUDA
             cudaFilter.init(decoder.getVideoWidth(), decoder.getVideoHeight());
+
+            // Mostrar primer frame
             updateFrame();
-            statusBar()->showMessage(QString("Opened %1 (%2x%3)").arg(fileName).arg(decoder.getVideoWidth()).arg(decoder.getVideoHeight()));
         } else {
-            QMessageBox::critical(this, "Error", "Failed to open video file via FFmpeg.");
+            QMessageBox::critical(this, "Error", "No se pudo abrir el archivo de video con FFmpeg.");
         }
     }
 }
@@ -160,96 +126,91 @@ void MainWindow::playVideo() {
     if (decoder.getVideoWidth() > 0) {
         isPlaying = true;
         playbackTimer->start(33); // Aprox 30fps
-        statusBar()->showMessage("Playing...");
     }
 }
 
 void MainWindow::stopVideo() {
     isPlaying = false;
     playbackTimer->stop();
-    statusBar()->showMessage("Stopped.");
 }
 
 void MainWindow::updateFrame()
 {
     QImage img;
     if (decoder.decodeNextFrame(img)) {
-        // Output Original
+        // Mostrar Original
         QPixmap pixmapIn = QPixmap::fromImage(img).scaled(inputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         inputVideoLabel->setPixmap(pixmapIn);
 
-        // Process with CUDA
-        QImage outImg = img.copy();
+        // Procesar con CUDA
+        QImage outImg = img.copy(); // Crear imagen de destino
         cudaFilter.processFrame(img.constBits(), outImg.bits());
 
-        // Output Filtered
+        // Mostrar Filtrado
         QPixmap pixmapOut = QPixmap::fromImage(outImg).scaled(outputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         outputVideoLabel->setPixmap(pixmapOut);
+
     } else {
+        // Fin del video o error
         stopVideo();
     }
 }
 
-void MainWindow::showFiltersDialog() {
-    QMessageBox::information(this, "Filters", "Filter chain configuration dialog will be implemented natively.");
-}
-
-void MainWindow::showCompressionDialog() {
-    QStringList codecs = {"Uncompressed", "libx264", "libx265", "hevc_nvenc"};
-    bool ok;
-    QString item = QInputDialog::getItem(this, "Video Compression", "Select video codec:", codecs, 0, false, &ok);
-    if (ok && !item.isEmpty()) {
-        selectedCodec = item;
-        selectedBitrate = QInputDialog::getInt(this, "Bitrate", "Enter bitrate (bps):", 4000000, 100000, 50000000, 100000, &ok);
-        if (ok) {
-            QMessageBox::information(this, "Settings Saved", "Codec: " + selectedCodec + "\nBitrate: " + QString::number(selectedBitrate) + " bps");
-        }
-    }
-}
-
-void MainWindow::exportVideo() {
+void MainWindow::exportImageSequence() {
     if (decoder.getVideoWidth() == 0) {
         QMessageBox::warning(this, "Error", "No input video loaded.");
         return;
     }
 
-    QString saveName = QFileDialog::getSaveFileName(this, "Save Video", "", "Video (*.mp4 *.mkv)");
-    if (saveName.isEmpty()) return;
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Select Destination Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (dir.isEmpty()) return;
 
-    if (!encoder.init(saveName, decoder.getVideoWidth(), decoder.getVideoHeight(), selectedCodec, selectedBitrate)) {
-        QMessageBox::critical(this, "Encoder Error", "Failed to initialize encoder with codec: " + selectedCodec);
+    bool ok;
+    QString prefix = QInputDialog::getText(this, tr("Image Prefix"), tr("Enter filename prefix:"), QLineEdit::Normal, "frame_", &ok);
+    if (!ok || prefix.isEmpty()) return;
+
+    isPlaying = false;
+    if (playbackTimer) playbackTimer->stop();
+
+    QImage img;
+    int count = 0;
+    while(decoder.decodeNextFrame(img)) {
+        QString filename = QString("%1/%2%3.png").arg(dir).arg(prefix).arg(count, 5, 10, QChar('0'));
+        img.save(filename, "PNG");
+        count++;
+    }
+
+    QMessageBox::information(this, "Done", QString("Exported %1 images to %2").arg(count).arg(dir));
+}
+
+void MainWindow::setDirectStreamCopy() {
+    directStreamCopy = true;
+    directStreamCopyAct->setChecked(true);
+    fullProcessingModeAct->setChecked(false);
+}
+
+void MainWindow::setFullProcessingMode() {
+    directStreamCopy = false;
+    directStreamCopyAct->setChecked(false);
+    fullProcessingModeAct->setChecked(true);
+}
+
+void MainWindow::queueJob() {
+    if (currentFile.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No input video loaded.");
         return;
     }
-
-    isExporting = true;
-    statusBar()->showMessage("Exporting...");
-
-    // Export loop handling Audio and Video
-    QImage img;
-    uint8_t audioBuf[8192];
-    int audioSize = 0;
-
-    while(true) {
-        bool hasVideo = decoder.decodeNextFrame(img);
-        bool hasAudio = decoder.decodeNextAudioFrame(audioBuf, audioSize);
-
-        if (!hasVideo && !hasAudio) break; // EOF
-
-        if (hasVideo) {
-            QImage outImg = img.copy();
-            cudaFilter.processFrame(img.constBits(), outImg.bits());
-            outImg = outImg.convertToFormat(QImage::Format_RGB32);
-            encoder.encodeFrame(outImg);
-        }
-
-        if (hasAudio && audioSize > 0) {
-            // A/V Sync would be maintained by PTS interleaving inside FFmpegEncoder
-            encoder.encodeAudioFrame(audioBuf, audioSize);
-        }
+    QString saveName = QFileDialog::getSaveFileName(this, "Queue Video", "", "Video (*.mp4 *.mkv)");
+    if (!saveName.isEmpty()) {
+        jobControl->addJob(currentFile, saveName, directStreamCopy);
+        QMessageBox::information(this, "Job Queued", "Job added to queue.");
     }
+}
 
-    encoder.close();
-    isExporting = false;
-    statusBar()->showMessage("Export complete!");
-    QMessageBox::information(this, "Done", "Video exported successfully to: " + saveName);
+void MainWindow::showJobControl() {
+    jobControl->show();
+}
+
+void MainWindow::runJobs() {
+    QMessageBox::information(this, "Batch Processing", "Processing jobs... (MVP simulation)");
 }
