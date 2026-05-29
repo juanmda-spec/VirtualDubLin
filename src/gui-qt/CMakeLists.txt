@@ -16,8 +16,6 @@ set(GUI_SOURCES
     main.cpp
     mainwindow.cpp
     mainwindow.h
-    JobControlDialog.cpp
-    JobControlDialog.h
     FFmpegDecoder.cpp
     CudaFilter_dummy.cpp
 )

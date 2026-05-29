@@ -13,7 +13,6 @@
 #include <QTimer>
 #include "FFmpegDecoder.h"
 #include "CudaFilter.h"
-#include "JobControlDialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -29,11 +28,6 @@ private slots:
     void playVideo();
     void stopVideo();
     void exportImageSequence();
-    void setDirectStreamCopy();
-    void setFullProcessingMode();
-    void queueJob();
-    void showJobControl();
-    void runJobs();
 
 private:
     QLabel *inputVideoLabel;
@@ -46,10 +40,6 @@ private:
     CudaFilter cudaFilter;
     QTimer *playbackTimer;
     bool isPlaying = false;
-    bool directStreamCopy = false;
-    QAction* directStreamCopyAct;
-    QAction* fullProcessingModeAct;
-    JobControlDialog* jobControl;
     QString currentFile;
 };
 

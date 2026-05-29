@@ -1,5 +1,4 @@
 #include <QInputDialog>
-#include <QStatusBar>
 #include "mainwindow.h"
 #include <QFileDialog>
 #include <QMessageBox>
@@ -13,40 +12,16 @@ MainWindow::MainWindow(QWidget *parent)
     resize(800, 600);
 
     // Menu
-
-    QMenu *videoMenu = menuBar()->addMenu(tr("&Video"));
-    directStreamCopyAct = new QAction(tr("&Direct stream copy"), this);
-    directStreamCopyAct->setCheckable(true);
-    videoMenu->addAction(directStreamCopyAct);
-    connect(directStreamCopyAct, &QAction::triggered, this, &MainWindow::setDirectStreamCopy);
-
-    fullProcessingModeAct = new QAction(tr("&Full processing mode"), this);
-    fullProcessingModeAct->setCheckable(true);
-    fullProcessingModeAct->setChecked(true); // Default
-    videoMenu->addAction(fullProcessingModeAct);
-    connect(fullProcessingModeAct, &QAction::triggered, this, &MainWindow::setFullProcessingMode);
-
     QMenu *fileMenu = menuBar()->addMenu(tr("&Archivo"));
     QAction *openAct = new QAction(tr("&Abrir archivo de video..."), this);
     fileMenu->addAction(openAct);
     connect(openAct, &QAction::triggered, this, &MainWindow::openVideo);
 
-
+    fileMenu->addSeparator();
     QAction *exportImgAct = new QAction(tr("Export &Image sequence..."), this);
     fileMenu->addAction(exportImgAct);
     connect(exportImgAct, &QAction::triggered, this, &MainWindow::exportImageSequence);
-
     fileMenu->addSeparator();
-
-    QAction *queueAct = new QAction(tr("Save as AVI... (Queue job)"), this);
-    fileMenu->addAction(queueAct);
-    connect(queueAct, &QAction::triggered, this, &MainWindow::queueJob);
-
-    QAction *jobControlAct = new QAction(tr("&Job Control..."), this);
-    jobControlAct->setShortcut(QKeySequence("F4"));
-    fileMenu->addAction(jobControlAct);
-    connect(jobControlAct, &QAction::triggered, this, &MainWindow::showJobControl);
-
     QAction *exitAct = new QAction(tr("&Salir"), this);
     fileMenu->addAction(exitAct);
     connect(exitAct, &QAction::triggered, this, &QWidget::close);
@@ -90,8 +65,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Playback timer
     playbackTimer = new QTimer(this);
-    jobControl = new JobControlDialog(this);
-    connect(jobControl, &JobControlDialog::startJobs, this, &MainWindow::runJobs);
     connect(playbackTimer, &QTimer::timeout, this, &MainWindow::updateFrame);
 
     connect(playButton, &QPushButton::clicked, this, &MainWindow::playVideo);
@@ -156,8 +129,10 @@ void MainWindow::updateFrame()
     }
 }
 
+#include <QInputDialog>
+
 void MainWindow::exportImageSequence() {
-    if (decoder.getVideoWidth() == 0) {
+    if (decoder.getVideoWidth() == 0 || currentFile.isEmpty()) {
         QMessageBox::warning(this, "Error", "No input video loaded.");
         return;
     }
@@ -169,48 +144,25 @@ void MainWindow::exportImageSequence() {
     QString prefix = QInputDialog::getText(this, tr("Image Prefix"), tr("Enter filename prefix:"), QLineEdit::Normal, "frame_", &ok);
     if (!ok || prefix.isEmpty()) return;
 
-    isPlaying = false;
-    if (playbackTimer) playbackTimer->stop();
+    stopVideo();
+
+    // Rewind video to start by reopening the decoder
+    if (!decoder.openFile(currentFile)) {
+        QMessageBox::critical(this, "Error", "Failed to reopen video for export.");
+        return;
+    }
 
     QImage img;
     int count = 0;
     while(decoder.decodeNextFrame(img)) {
+        // Pass through CUDA filter (or dummy fallback)
+        QImage outImg = img.copy();
+        cudaFilter.processFrame(img.constBits(), outImg.bits());
+
         QString filename = QString("%1/%2%3.png").arg(dir).arg(prefix).arg(count, 5, 10, QChar('0'));
-        img.save(filename, "PNG");
+        outImg.save(filename, "PNG");
         count++;
     }
 
     QMessageBox::information(this, "Done", QString("Exported %1 images to %2").arg(count).arg(dir));
-}
-
-void MainWindow::setDirectStreamCopy() {
-    directStreamCopy = true;
-    directStreamCopyAct->setChecked(true);
-    fullProcessingModeAct->setChecked(false);
-}
-
-void MainWindow::setFullProcessingMode() {
-    directStreamCopy = false;
-    directStreamCopyAct->setChecked(false);
-    fullProcessingModeAct->setChecked(true);
-}
-
-void MainWindow::queueJob() {
-    if (currentFile.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No input video loaded.");
-        return;
-    }
-    QString saveName = QFileDialog::getSaveFileName(this, "Queue Video", "", "Video (*.mp4 *.mkv)");
-    if (!saveName.isEmpty()) {
-        jobControl->addJob(currentFile, saveName, directStreamCopy);
-        QMessageBox::information(this, "Job Queued", "Job added to queue.");
-    }
-}
-
-void MainWindow::showJobControl() {
-    jobControl->show();
-}
-
-void MainWindow::runJobs() {
-    QMessageBox::information(this, "Batch Processing", "Processing jobs... (MVP simulation)");
 }

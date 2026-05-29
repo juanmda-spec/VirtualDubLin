@@ -32,3 +32,17 @@ Aprovechar la GPU es esencial para el procesamiento moderno de video de alta res
 *   **Procesamiento de Filtros:** Identificar las operaciones más costosas en CPU (por ejemplo: reescalado, conversiones de espacio de color, filtros de desenfoque, reducción de ruido). Reescribir la lógica matemática de estos filtros utilizando "kernels" de CUDA, permitiendo que miles de hilos en la GPU procesen los píxeles de un frame simultáneamente.
 *   **Aceleración de Codecs (NVENC/NVDEC):** Configurar la integración de FFmpeg de la Fase 4 para priorizar el uso de codecs acelerados por hardware de NVIDIA (como `h264_nvenc` y decodificadores `cuvid`/`nvdec`), reduciendo drásticamente la carga de la CPU durante la importación y exportación de video.
 *   **Transferencia de Memoria Optimizada:** Implementar una gestión eficiente de la memoria de la GPU, minimizando las transferencias (copias de Host-a-Device y Device-a-Host) manteniendo los frames en la VRAM de la tarjeta gráfica mientras pasen a través de los distintos filtros de procesamiento de video.
+
+## Fase 6: Opciones Básicas de Audio (Planificación)
+Para que VirtualDubLin sea completamente funcional como editor, el audio debe ser tratado a la par del video.
+*   **Interfaz Gráfica de Audio:**
+    *   Implementar un menú `Audio` con las opciones clásicas: `No audio`, `Source audio` (por defecto) y `Audio from other file...`.
+    *   Añadir opciones de procesamiento: `Direct stream copy` y `Full processing mode`.
+    *   Añadir diálogo de compresión (`Compression...`) que permita seleccionar el formato (AAC, MP3, FLAC) y el bitrate (ej. 192kbps).
+*   **Demuxing (FFmpegDecoder):**
+    *   Modificar `FFmpegDecoder` para que no solo busque el stream de video, sino que detecte e inicialice el stream de audio (`AVMEDIA_TYPE_AUDIO`).
+    *   Refactorizar el bucle de lectura (`av_read_frame`) para que entregue los paquetes (`AVPacket`) entrelazados (audio y video) a la lógica de procesamiento en lugar de descartarlos.
+*   **Muxing y Encoding (FFmpegEncoder):**
+    *   Ampliar el `FFmpegEncoder` para que acepte los parámetros de audio recopilados desde la UI.
+    *   En modo `Direct stream copy`, rutear el paquete de audio crudo directamente al archivo contenedor de salida ajustando los sellos de tiempo (`pts`/`dts`).
+    *   En modo `Full processing mode`, inicializar un codificador (`libfdk_aac` o el nativo de ffmpeg), enviar los frames PCM decodificados y empaquetarlos en el archivo de salida.
