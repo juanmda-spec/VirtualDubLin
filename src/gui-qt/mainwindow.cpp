@@ -1,4 +1,6 @@
 #include <QInputDialog>
+#include <QProgressDialog>
+#include <QCoreApplication>
 #include "mainwindow.h"
 #include <QFileDialog>
 #include <QMessageBox>
@@ -60,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
     controlsLayout->addWidget(playButton);
     controlsLayout->addWidget(stopButton);
     controlsLayout->addWidget(timelineSlider);
+    connect(timelineSlider, &QSlider::sliderMoved, this, &MainWindow::sliderMoved);
 
     mainLayout->addLayout(controlsLayout);
 
@@ -87,6 +90,11 @@ void MainWindow::openVideo()
             // Iniciar filtro CUDA
             cudaFilter.init(decoder.getVideoWidth(), decoder.getVideoHeight());
 
+            // Configurar Timeline Slider
+            int totalFrames = decoder.getTotalFrames();
+            timelineSlider->setRange(0, totalFrames > 0 ? totalFrames - 1 : 0);
+            timelineSlider->setValue(0);
+
             // Mostrar primer frame
             updateFrame();
         } else {
@@ -97,6 +105,9 @@ void MainWindow::openVideo()
 
 void MainWindow::playVideo() {
     if (decoder.getVideoWidth() > 0) {
+        if (decoder.getCurrentFrameIndex() >= decoder.getTotalFrames() - 1) {
+            decoder.seekToFrame(0);
+        }
         isPlaying = true;
         playbackTimer->start(33); // Aprox 30fps
     }
@@ -111,13 +122,17 @@ void MainWindow::updateFrame()
 {
     QImage img;
     if (decoder.decodeNextFrame(img)) {
+        timelineSlider->setValue(decoder.getCurrentFrameIndex());
+
         // Mostrar Original
         QPixmap pixmapIn = QPixmap::fromImage(img).scaled(inputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         inputVideoLabel->setPixmap(pixmapIn);
 
-        // Procesar con CUDA
+        // Procesar con CUDA (Opcional)
         QImage outImg = img.copy(); // Crear imagen de destino
-        cudaFilter.processFrame(img.constBits(), outImg.bits());
+        if (enableCudaFilter) {
+            cudaFilter.processFrame(img.constBits(), outImg.bits());
+        }
 
         // Mostrar Filtrado
         QPixmap pixmapOut = QPixmap::fromImage(outImg).scaled(outputVideoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -130,6 +145,8 @@ void MainWindow::updateFrame()
 }
 
 #include <QInputDialog>
+#include <QProgressDialog>
+#include <QCoreApplication>
 
 void MainWindow::exportImageSequence() {
     if (decoder.getVideoWidth() == 0 || currentFile.isEmpty()) {
@@ -154,15 +171,35 @@ void MainWindow::exportImageSequence() {
 
     QImage img;
     int count = 0;
+    int totalFrames = decoder.getTotalFrames();
+    if (totalFrames <= 0) totalFrames = 0; // Unknown
+
+    QProgressDialog progress("Exporting frames to PNG...", "Cancel", 0, totalFrames, this);
+    progress.setWindowModality(Qt::WindowModal);
+
     while(decoder.decodeNextFrame(img)) {
-        // Pass through CUDA filter (or dummy fallback)
+        if (progress.wasCanceled()) break;
+
         QImage outImg = img.copy();
-        cudaFilter.processFrame(img.constBits(), outImg.bits());
+        if (enableCudaFilter) {
+            cudaFilter.processFrame(img.constBits(), outImg.bits());
+        }
 
         QString filename = QString("%1/%2%3.png").arg(dir).arg(prefix).arg(count, 5, 10, QChar('0'));
         outImg.save(filename, "PNG");
+
         count++;
+        if (totalFrames > 0) progress.setValue(count);
+        QCoreApplication::processEvents();
     }
+    progress.setValue(totalFrames);
 
     QMessageBox::information(this, "Done", QString("Exported %1 images to %2").arg(count).arg(dir));
+}
+
+void MainWindow::sliderMoved(int position) {
+    if (decoder.getVideoWidth() > 0) {
+        decoder.seekToFrame(position);
+        updateFrame();
+    }
 }

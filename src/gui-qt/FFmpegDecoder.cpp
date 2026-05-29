@@ -103,6 +103,7 @@ bool FFmpegDecoder::decodeNextFrame(QImage &outImage) {
             // Convert to QImage
             QImage img(pFrameRGB->data[0], pCodecContext->width, pCodecContext->height, pFrameRGB->linesize[0], QImage::Format_RGB888);
             outImage = img.copy(); // Deep copy so data isn't overwritten
+            currentFrameIndex++;
 
             av_packet_unref(pPacket);
             return true;
@@ -119,4 +120,42 @@ void FFmpegDecoder::close() {
     if (pCodecContext) { avcodec_free_context(&pCodecContext); pCodecContext = nullptr; }
     if (pFormatContext) { avformat_close_input(&pFormatContext); pFormatContext = nullptr; }
     videoStreamIndex = -1;
+    currentFrameIndex = 0;
+}
+
+int FFmpegDecoder::getTotalFrames() const {
+    if (!pFormatContext || videoStreamIndex < 0) return 0;
+    AVStream *stream = pFormatContext->streams[videoStreamIndex];
+    if (stream->nb_frames > 0) return stream->nb_frames;
+
+    // Estimate from duration and framerate if nb_frames is missing
+    if (stream->duration > 0 && stream->time_base.den > 0) {
+        double duration_sec = stream->duration * av_q2d(stream->time_base);
+        double fps = av_q2d(stream->avg_frame_rate);
+        return (int)(duration_sec * fps);
+    }
+    return 0;
+}
+
+bool FFmpegDecoder::seekToFrame(int64_t frame) {
+    if (!pFormatContext || videoStreamIndex < 0) return false;
+    AVStream *stream = pFormatContext->streams[videoStreamIndex];
+
+    int64_t target_ts = frame * stream->time_base.den / (stream->time_base.num * av_q2d(stream->avg_frame_rate));
+
+    if (av_seek_frame(pFormatContext, videoStreamIndex, target_ts, AVSEEK_FLAG_BACKWARD) < 0) {
+        if (av_seek_frame(pFormatContext, -1, target_ts, AVSEEK_FLAG_BACKWARD) < 0) {
+            return false;
+        }
+    }
+
+    if (pCodecContext) avcodec_flush_buffers(pCodecContext);
+
+    // Set to a low value initially because the keyframe is BEFORE our target frame
+    // In a real scenario we'd decode the PTS from the packet to know where we are.
+    // For this MVP, we just flush buffers and let the next decode provide the closest frame.
+    // To do exact seeking properly, we must read the packet PTS.
+
+    currentFrameIndex = frame;
+    return true;
 }

@@ -27,6 +27,7 @@ private slots:
     void updateFrame();
     void playVideo();
     void stopVideo();
+    void sliderMoved(int position);
     void exportImageSequence();
 
 private:
@@ -40,6 +41,7 @@ private:
     CudaFilter cudaFilter;
     QTimer *playbackTimer;
     bool isPlaying = false;
+    bool enableCudaFilter = false;
     QString currentFile;
 };
 
